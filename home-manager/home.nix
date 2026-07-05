@@ -32,4 +32,21 @@
       claude = "nix run github:ryoppippi/nix-claude-code#claude-fhs";
     };
   };
+
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      battery = {
+        full_symbol = "=";
+        charging_symbol = "^";
+        discharging_symbol = "v";
+        unknown_symbol = "?";
+        empty_symbol = "x";
+        display = [
+          { threshold = 100; style = "bold green"; }
+        ];
+      };
+    };
+  };
 }

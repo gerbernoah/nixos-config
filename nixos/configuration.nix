@@ -9,14 +9,23 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
-
-  programs._1password-gui.enable = true;
+  programs._1password = { enable = true; };
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "ngerber" ];
+  };
   programs.zsh.enable = true;
 
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
+  # lanzaboote replaces systemd-boot to add Secure Boot signing of the
+  # boot manager and every generation's kernel .efi image.
+  boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+  };
   boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.forceImportRoot = false;
   boot.initrd.luks.devices."cryptroot" = {
     device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
     preLVM = true;
@@ -99,10 +108,10 @@
   environment.systemPackages = with pkgs; [
     vim
     wget
-    networkmanagerapplet
     alacritty
     chromium
     tree
+    sbctl
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
