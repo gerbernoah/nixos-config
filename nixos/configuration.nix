@@ -29,30 +29,14 @@
     pkiBundle = "/etc/secureboot";
   };
   
-  fileSystems."/boot" = {
-    neededForBoot = true;
-    # Wait for udev to finish enumerating USB devices before attempting this
-    # mount, otherwise stage-1 can race ahead of the (slow-to-enumerate)
-    # BOOTKEY stick and the device unit never appears.
-    options = [ "x-systemd.device-timeout=0" "x-systemd.requires=systemd-udev-settle.service" ];
-  };
-
   boot.supportedFilesystems = [ "zfs" ];
   boot.zfs.forceImportRoot = false;
   boot.initrd.luks.devices."cryptroot" = {
     device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
     preLVM = true;
   };
-
-  boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
-  boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
-  boot.initrd.systemd.services.systemd-udev-settle.enable = true;
-  boot.initrd.systemd.services.zfs-import-zroot = {
-    after = [ "cryptsetup.target" ];
-    requires = [ "cryptsetup.target" ];
-    unitConfig.RequiresMountsFor = [ "/boot" ];
-    serviceConfig.StandardOutput = "journal+console";
-    serviceConfig.StandardError = "journal+console";
+  boot.initrd.secrets = {
+    "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
   };
   boot.initrd.systemd.emergencyAccess = false;
 
@@ -187,3 +171,25 @@
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = ["nix-command" "flakes" ];
 }
+
+# --- Parked idea: ZFS key from removable stick instead of baked into initrd ---
+#
+# Goal: read the ZFS native-encryption key from the removable BOOTKEY stick's
+# /boot partition at boot time, instead of baking it into the initrd via
+# boot.initrd.secrets above.
+#
+# What that required, from testing:
+#   - fileSystems."/boot" needs neededForBoot = true, plus
+#     options = [ "x-systemd.device-timeout=0" "x-systemd.requires=systemd-udev-settle.service" ]
+#     to reliably wait for the slow-to-enumerate USB stick during stage 1.
+#   - boot.initrd.systemd.services.systemd-udev-settle.enable = true;
+#   - boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
+#     boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
+#   - boot.initrd.systemd.services.zfs-import-zroot needs both:
+#       unitConfig.RequiresMountsFor = [ "/boot" ];
+#       after = [ "cryptsetup.target" ]; requires = [ "cryptsetup.target" ];
+#     zfs-import-zroot has no default ordering against the LUKS unlock, so
+#     without this it can race ahead of cryptsetup and fail to find the pool.
+#
+# Even with all of the above, boot still failed at "Import ZFS pool zroot"
+# after LUKS unlocked fine. Root cause not found; revisit later.
