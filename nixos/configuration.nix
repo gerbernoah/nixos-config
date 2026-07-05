@@ -47,15 +47,14 @@
   boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
   boot.initrd.systemd.services.systemd-udev-settle.enable = true;
-  boot.initrd.systemd.services.zfs-import-zroot.unitConfig.RequiresMountsFor = [ "/boot" ];
-  boot.initrd.systemd.emergencyAccess = false;
-
-  # Normal boots have no unauthenticated shell. Select this specialisation
-  # from the (signed) boot menu only when you actually need to debug a stuck
-  # stage-1 boot: it spawns a root shell on tty9 (Ctrl+Alt+F9).
-  specialisation.debug.configuration = {
-    boot.kernelParams = [ "systemd.debug-shell=1" ];
+  # zfs-import-zroot has no dependency on the LUKS unlock by default, so it can
+  # race ahead of cryptsetup and fail to find the pool before cryptroot is open.
+  boot.initrd.systemd.services.zfs-import-zroot = {
+    after = [ "cryptsetup.target" ];
+    requires = [ "cryptsetup.target" ];
+    unitConfig.RequiresMountsFor = [ "/boot" ];
   };
+  boot.initrd.systemd.emergencyAccess = false;
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
