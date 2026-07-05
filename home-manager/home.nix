@@ -138,7 +138,6 @@ in
         { command = "dex --autostart --environment i3"; notification = false; }
         { command = "xss-lock --transfer-sleep-lock -- i3lock --nofork"; notification = false; }
         { command = "nm-applet"; notification = false; }
-        { command = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"; notification = false; }
       ];
 
       keybindings = defaultI3Keybindings // {
