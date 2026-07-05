@@ -33,7 +33,7 @@
     # Wait for udev to finish enumerating USB devices before attempting this
     # mount, otherwise stage-1 can race ahead of the (slow-to-enumerate)
     # BOOTKEY stick and the device unit never appears.
-    options = [ "x-systemd.device-timeout=30" "x-systemd.requires=systemd-udev-settle.service" ];
+    options = [ "x-systemd.device-timeout=0" "x-systemd.requires=systemd-udev-settle.service" ];
   };
 
   boot.supportedFilesystems = [ "zfs" ];
@@ -47,7 +47,14 @@
   boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
   boot.initrd.systemd.services.systemd-udev-settle.enable = true;
   boot.initrd.systemd.services.zfs-import-zroot.unitConfig.RequiresMountsFor = [ "/boot" ];
-  boot.initrd.systemd.emergencyAccess = true;
+  boot.initrd.systemd.emergencyAccess = false;
+
+  # Normal boots have no unauthenticated shell. Select this specialisation
+  # from the (signed) boot menu only when you actually need to debug a stuck
+  # stage-1 boot: it spawns a root shell on tty9 (Ctrl+Alt+F9).
+  specialisation.debug.configuration = {
+    boot.kernelParams = [ "systemd.debug-shell=1" ];
+  };
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
@@ -128,7 +135,13 @@
     chromium
     tree
     sbctl
+    brightnessctl
   ];
+
+  # brightnessctl ships a udev rule that chgrp/chmod's the backlight sysfs
+  # file to group "video" on add; without registering the package here the
+  # rule never runs and the file stays root-owned/read-only.
+  services.udev.packages = [ pkgs.brightnessctl ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
