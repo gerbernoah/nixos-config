@@ -5,10 +5,12 @@
 
   networking.wireless = {
     enable = true;
-    # Secrets are substituted in at service-start time from a root-only file
-    # that lives outside the repo (see /etc/nixos-secrets/eduroam.env), so the
-    # actual identity/password never land in this repo or the Nix store.
-    environmentFile = "/etc/nixos-secrets/eduroam.env";
+    # Secrets are substituted in at service-start time via wpa_supplicant's
+    # ext:NAME mechanism, from a root-only file that lives outside the repo:
+    # /etc/nixos-secrets/eduroam.env (create it yourself, see EDUROAM_SETUP.md).
+    # Values in that file are literal (no quotes/escaping), so the actual
+    # identity/password never land in this repo or the Nix store.
+    secretsFile = "/etc/nixos-secrets/eduroam.env";
 
     networks."eduroam" = {
       # ETH Zurich eduroam: WPA2/3-Enterprise, PEAP + MSCHAPv2.
@@ -18,15 +20,15 @@
       auth = ''
         key_mgmt=WPA-EAP
         eap=PEAP
-        identity="@EDUROAM_IDENTITY@"
+        identity=ext:eduroam_identity
         anonymous_identity="anonymous@ethz.ch"
-        password="@EDUROAM_PASSWORD@"
+        password=ext:eduroam_password
         phase2="auth=MSCHAPV2"
       '';
     };
 
     # Any other WiFi networks you rely on (home, phone hotspot, etc.) need to
     # be added here too now that NetworkManager is off, e.g.:
-    # networks."home-ssid".psk = "@HOME_WIFI_PSK@";
+    # networks."home-ssid".pskRaw = "ext:home_wifi_psk";
   };
 }

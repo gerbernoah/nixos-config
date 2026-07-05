@@ -147,13 +147,21 @@ in
       ];
 
       keybindings = defaultI3Keybindings // {
-        # vim-style focus movement, true hjkl orientation. Overrides the
-        # default mod+h (split h), which moves to mod+Shift+h below.
+        # vim-style focus/move, true hjkl orientation. Overrides the default
+        # mod+h (split h) and mod+v (split v), which move to mod+n/mod+m below.
         "${mod}+h" = "focus left";
         "${mod}+j" = "focus down";
         "${mod}+k" = "focus up";
         "${mod}+l" = "focus right";
-        "${mod}+Shift+h" = "split h";
+
+        "${mod}+Shift+h" = "move left";
+        "${mod}+Shift+j" = "move down";
+        "${mod}+Shift+k" = "move up";
+        "${mod}+Shift+l" = "move right";
+
+        "${mod}+n" = "split h";
+        "${mod}+m" = "split v";
+        "${mod}+v" = null;
 
         "XF86AudioRaiseVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && killall -SIGUSR1 i3status";
         "XF86AudioLowerVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && killall -SIGUSR1 i3status";
