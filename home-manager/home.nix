@@ -37,6 +37,12 @@
     enable = true;
     enableZshIntegration = true;
     settings = {
+      format = "$directory$git_branch$git_commit$git_state$git_metrics$git_status$cmd_duration$line_break$jobs$time$battery$character";
+      time = {
+        disabled = false;
+        format = "[$time]($style) ";
+        time_format = "%H:%M";
+      };
       battery = {
         full_symbol = "=";
         charging_symbol = "^";
