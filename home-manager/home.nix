@@ -3,12 +3,6 @@
 let
   mod = "Mod4";
 
-  # i3's own default keybindings (mirroring i3-config-wizard's stock output).
-  # Written out explicitly and merged with `//` below rather than relying on
-  # home-manager's per-key mkOptionDefault priority: a plain `keybindings = {...}`
-  # assignment is a normal-priority definition, and normal priority beats the
-  # module's mkOptionDefault-wrapped default outright for the *whole* option,
-  # discarding all unmentioned default keys instead of merging around them.
   defaultI3Keybindings = {
     "${mod}+Return" = "exec alacritty";
     "${mod}+Shift+q" = "kill";
@@ -144,6 +138,7 @@ in
         { command = "dex --autostart --environment i3"; notification = false; }
         { command = "xss-lock --transfer-sleep-lock -- i3lock --nofork"; notification = false; }
         { command = "nm-applet"; notification = false; }
+        { command = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"; notification = false; }
       ];
 
       keybindings = defaultI3Keybindings // {
