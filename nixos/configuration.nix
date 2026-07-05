@@ -22,7 +22,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.lanzaboote = {
     enable = true;
-    pkiBundle = "/var/lib/sbctl";
+    pkiBundle = "/etc/secureboot";
   };
   boot.supportedFilesystems = [ "zfs" ];
   boot.zfs.forceImportRoot = false;
@@ -31,7 +31,7 @@
     preLVM = true;
   };
   boot.initrd.secrets = {
-    "/mnt/boot/keys/zfs.key" = "/boot/keys/zfs.key";
+    "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
   };
   
   networking.hostName = "nix-frame"; # Define your hostname.
