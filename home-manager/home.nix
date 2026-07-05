@@ -1,5 +1,75 @@
 { config, pkgs, inputs, ... }:
 
+let
+  mod = "Mod4";
+
+  # i3's own default keybindings (mirroring i3-config-wizard's stock output).
+  # Written out explicitly and merged with `//` below rather than relying on
+  # home-manager's per-key mkOptionDefault priority: a plain `keybindings = {...}`
+  # assignment is a normal-priority definition, and normal priority beats the
+  # module's mkOptionDefault-wrapped default outright for the *whole* option,
+  # discarding all unmentioned default keys instead of merging around them.
+  defaultI3Keybindings = {
+    "${mod}+Return" = "exec alacritty";
+    "${mod}+Shift+q" = "kill";
+    "${mod}+d" = "exec rofi -show drun";
+
+    "${mod}+Left" = "focus left";
+    "${mod}+Down" = "focus down";
+    "${mod}+Up" = "focus up";
+    "${mod}+Right" = "focus right";
+
+    "${mod}+Shift+Left" = "move left";
+    "${mod}+Shift+Down" = "move down";
+    "${mod}+Shift+Up" = "move up";
+    "${mod}+Shift+Right" = "move right";
+
+    "${mod}+h" = "split h";
+    "${mod}+v" = "split v";
+    "${mod}+f" = "fullscreen toggle";
+
+    "${mod}+s" = "layout stacking";
+    "${mod}+w" = "layout tabbed";
+    "${mod}+e" = "layout toggle split";
+
+    "${mod}+Shift+space" = "floating toggle";
+    "${mod}+space" = "focus mode_toggle";
+
+    "${mod}+a" = "focus parent";
+
+    "${mod}+Shift+minus" = "move scratchpad";
+    "${mod}+minus" = "scratchpad show";
+
+    "${mod}+1" = "workspace number 1";
+    "${mod}+2" = "workspace number 2";
+    "${mod}+3" = "workspace number 3";
+    "${mod}+4" = "workspace number 4";
+    "${mod}+5" = "workspace number 5";
+    "${mod}+6" = "workspace number 6";
+    "${mod}+7" = "workspace number 7";
+    "${mod}+8" = "workspace number 8";
+    "${mod}+9" = "workspace number 9";
+    "${mod}+0" = "workspace number 10";
+
+    "${mod}+Shift+1" = "move container to workspace number 1";
+    "${mod}+Shift+2" = "move container to workspace number 2";
+    "${mod}+Shift+3" = "move container to workspace number 3";
+    "${mod}+Shift+4" = "move container to workspace number 4";
+    "${mod}+Shift+5" = "move container to workspace number 5";
+    "${mod}+Shift+6" = "move container to workspace number 6";
+    "${mod}+Shift+7" = "move container to workspace number 7";
+    "${mod}+Shift+8" = "move container to workspace number 8";
+    "${mod}+Shift+9" = "move container to workspace number 9";
+    "${mod}+Shift+0" = "move container to workspace number 10";
+
+    "${mod}+Shift+c" = "reload";
+    "${mod}+Shift+r" = "restart";
+    "${mod}+Shift+e" =
+      "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
+
+    "${mod}+r" = "mode resize";
+  };
+in
 {
   home.username = "ngerber";
   home.homeDirectory = "/home/ngerber";
@@ -54,5 +124,56 @@
         ];
       };
     };
+  };
+
+  # i3 window manager itself is enabled at the system level
+  # (services.xserver.windowManager.i3 in configuration.nix); this only
+  # takes over generating ~/.config/i3/config, replacing the file that
+  # i3-config-wizard originally wrote.
+  xsession.windowManager.i3 = {
+    enable = true;
+    config = {
+      modifier = mod;
+      terminal = "alacritty";
+      menu = "rofi -show drun";
+
+      # polybar is used instead of i3bar
+      bars = [ ];
+
+      startup = [
+        { command = "dex --autostart --environment i3"; notification = false; }
+        { command = "xss-lock --transfer-sleep-lock -- i3lock --nofork"; notification = false; }
+        { command = "nm-applet"; notification = false; }
+      ];
+
+      keybindings = defaultI3Keybindings // {
+        # vim-style focus/move, true hjkl orientation. Overrides the default
+        # mod+h (split h) and mod+v (split v), which move to mod+n/mod+m below.
+        "${mod}+h" = "focus left";
+        "${mod}+j" = "focus down";
+        "${mod}+k" = "focus up";
+        "${mod}+l" = "focus right";
+
+        "${mod}+Shift+h" = "move left";
+        "${mod}+Shift+j" = "move down";
+        "${mod}+Shift+k" = "move up";
+        "${mod}+Shift+l" = "move right";
+
+        "${mod}+n" = "split h";
+        "${mod}+m" = "split v";
+        "${mod}+v" = null;
+
+        "XF86AudioRaiseVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && killall -SIGUSR1 i3status";
+        "XF86AudioLowerVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && killall -SIGUSR1 i3status";
+        "XF86AudioMute" = "exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && killall -SIGUSR1 i3status";
+        "XF86AudioMicMute" = "exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && killall -SIGUSR1 i3status";
+        "XF86MonBrightnessUp" = "exec --no-startup-id brightnessctl set +5%";
+        "XF86MonBrightnessDown" = "exec --no-startup-id brightnessctl set 5%-";
+      };
+    };
+
+    extraConfig = ''
+      tiling_drag modifier titlebar
+    '';
   };
 }

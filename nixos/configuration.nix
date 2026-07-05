@@ -8,6 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./wireless.nix
     ];
  
   programs._1password = { enable = true; };
@@ -58,10 +59,8 @@
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
-
-# Pick only one of the below networking options.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+  # Wireless networking (wpa_supplicant, NetworkManager disabled) is configured
+  # in ./wireless.nix.
 
   # Set your time zone.
   time.timeZone = "Europe/Zurich";
