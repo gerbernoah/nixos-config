@@ -9,39 +9,50 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
+ 
   programs._1password = { enable = true; };
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = [ "ngerber" ];
   };
+ 
   programs.zsh.enable = true;
 
   # lanzaboote replaces systemd-boot to add Secure Boot signing of the
   # boot manager and every generation's kernel .efi image.
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = true;
+
   boot.lanzaboote = {
     enable = true;
     pkiBundle = "/etc/secureboot";
   };
+  
+  fileSystems."/boot" = {
+    neededForBoot = true;
+    # Wait for udev to finish enumerating USB devices before attempting this
+    # mount, otherwise stage-1 can race ahead of the (slow-to-enumerate)
+    # BOOTKEY stick and the device unit never appears.
+    options = [ "x-systemd.device-timeout=30" "x-systemd.requires=systemd-udev-settle.service" ];
+  };
+
   boot.supportedFilesystems = [ "zfs" ];
   boot.zfs.forceImportRoot = false;
   boot.initrd.luks.devices."cryptroot" = {
     device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
     preLVM = true;
   };
-  fileSystems."/boot" = {
-    neededForBoot = true;
-    options = [ "x-systemd.device-timeout=30" ];
-  };
+
   boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
+  boot.initrd.systemd.services.systemd-udev-settle.enable = true;
   boot.initrd.systemd.services.zfs-import-zroot.unitConfig.RequiresMountsFor = [ "/boot" ];
   boot.initrd.systemd.emergencyAccess = true;
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
-  # Pick only one of the below networking options.
+
+# Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
