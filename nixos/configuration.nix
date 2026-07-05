@@ -47,12 +47,12 @@
   boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
   boot.initrd.systemd.services.systemd-udev-settle.enable = true;
-  # zfs-import-zroot has no dependency on the LUKS unlock by default, so it can
-  # race ahead of cryptsetup and fail to find the pool before cryptroot is open.
   boot.initrd.systemd.services.zfs-import-zroot = {
     after = [ "cryptsetup.target" ];
     requires = [ "cryptsetup.target" ];
     unitConfig.RequiresMountsFor = [ "/boot" ];
+    serviceConfig.StandardOutput = "journal+console";
+    serviceConfig.StandardError = "journal+console";
   };
   boot.initrd.systemd.emergencyAccess = false;
 
