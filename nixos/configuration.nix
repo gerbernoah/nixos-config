@@ -30,17 +30,14 @@
     device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
     preLVM = true;
   };
-  # The zfs encryption key lives on the removable BOOTKEY stick (fileSystems."/boot"),
-  # so it must be mounted in stage-1 before the root pool is imported/unlocked, rather
-  # than baking a copy of the key into the initrd at build time.
-  fileSystems."/boot".neededForBoot = true;
-  boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
-  # zfs-import-zroot isn't ordered against the /boot mount by default, so pin it
-  # explicitly to avoid a race where the key load runs before the stick is mounted.
-  boot.initrd.systemd.services.zfs-import-zroot = {
-    after = [ "boot.mount" ];
-    requires = [ "boot.mount" ];
+  fileSystems."/boot" = {
+    neededForBoot = true;
+    options = [ "x-systemd.device-timeout=30" ];
   };
+  boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
+  boot.initrd.systemd.services.zfs-import-zroot.unitConfig.RequiresMountsFor = [ "/boot" ];
+  boot.initrd.systemd.emergencyAccess = true;
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
