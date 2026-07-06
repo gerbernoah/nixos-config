@@ -9,7 +9,8 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];  
-
+  
+  virtualisation.docker.enable = true;
   hardware.graphics.enable = true;
   hardware.enableRedistributableFirmware = true;
 
@@ -118,6 +119,7 @@
       "wheel"
       "networkmanager"
       "video"
+      "docker"
     ];
   };
 
