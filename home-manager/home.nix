@@ -231,6 +231,7 @@ in
         { command = "dex --autostart --environment sway"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
+        { command = "waybar"; }
       ];
 
       keybindings = defaultSwayKeybindings // {
@@ -267,7 +268,7 @@ in
 
   programs.waybar = {
     enable = true;
-    systemd.enable = true;
+    systemd.enable = false;
     settings = {
       mainBar = {
         layer = "top";
