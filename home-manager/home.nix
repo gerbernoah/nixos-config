@@ -81,7 +81,7 @@ in
     deadnix # finds unused Nix bindings
     inputs.claude-desktop.packages.${pkgs.system}.claude-desktop
     jetbrains.idea
-    discord-ptb 
+    docker-compose
   ];
 
   programs.direnv = {
