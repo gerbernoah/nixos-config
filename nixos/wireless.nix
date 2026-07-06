@@ -18,7 +18,10 @@
       '';
     };
 
-    networks."coldspot".psk = "ext:coldspot_psk";
+    networks."coldspot" = {
+      psk =  "ext:coldspot_psk";
+      authProtocols = [ "WPA-PSK" "SAE" ];
+    };
     # networks."home-ssid".pskRaw = "ext:home_wifi_psk";
   };
 }
