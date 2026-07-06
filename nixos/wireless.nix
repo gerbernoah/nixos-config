@@ -11,7 +11,7 @@
       auth = ''
         key_mgmt=WPA-EAP
         eap=PEAP
-        identity=ext:eduroam_identity
+        identity="nogerber@student-net.ethz.ch"
         anonymous_identity="anonymous@ethz.ch"
         password=ext:eduroam_password
         phase2="auth=MSCHAPV2"
