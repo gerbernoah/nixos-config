@@ -8,7 +8,6 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ./wireless.nix
     ];
  
   programs._1password = { enable = true; };
@@ -42,8 +41,6 @@
 
   networking.hostName = "nix-frame"; # Define your hostname.
   networking.hostId = "d38345c2";
-  # Wireless networking (wpa_supplicant, NetworkManager disabled) is configured
-  # in ./wireless.nix.
 
   # Set your time zone.
   time.timeZone = "Europe/Zurich";
@@ -51,7 +48,11 @@
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
+  networking.networkmanager = {
+    enable = true;
+    wifi.macAdress = "random";
+  }
+  
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
   console = {
