@@ -132,8 +132,9 @@ in
       modifier = mod;
       terminal = "alacritty";
       menu = "fuzzel";
-      focus.wrapping = "no";
-
+      focus.wrapping = "no";  
+      input."*".xkb_layout = "de";
+      
       # waybar is used instead of the built-in sway bar
       bars = [ ];
 
