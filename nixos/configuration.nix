@@ -51,7 +51,7 @@
   networking.networkmanager = {
     enable = true;
     wifi.macAdress = "random";
-  }
+  };
   
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
