@@ -11,6 +11,8 @@
     ];  
   
   virtualisation.docker.enable = true;
+  
+  hardware.wirelessRegulatoryDatabase = true;
   hardware.graphics.enable = true;
   hardware.enableRedistributableFirmware = true;
 
@@ -23,10 +25,11 @@
   programs.zsh.enable = true;
   programs.sway.enable = true;
 
-  # lanzaboote replaces systemd-boot to add Secure Boot signing of the
-  # boot manager and every generation's kernel .efi image.
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.extraModprobeConfig = ''
+    options cfg80211 ieee80211_regdom="CH"
+  '';
 
   boot.lanzaboote = {
     enable = true;
