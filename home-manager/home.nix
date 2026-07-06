@@ -125,6 +125,10 @@ in
   # ~/.config/sway/config.
   wayland.windowManager.sway = {
     enable = true;
+    wrapperFeatures.gtk = true;
+    extraSessionCommands = ''
+      export WLR_DRM_DEVICES="/dev/dri/card0:/dev/dri/card1"
+    '';
     config = {
       modifier = mod;
       terminal = "alacritty";
