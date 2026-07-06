@@ -9,8 +9,6 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];  
-  security.polkit.enable = true; 
-  security.pam.services.swaylock = {};
 
   programs._1password = { enable = true; };
   programs._1password-gui = {
@@ -19,6 +17,7 @@
   };
  
   programs.zsh.enable = true;
+  programs.sway.enable = true;
 
   # lanzaboote replaces systemd-boot to add Secure Boot signing of the
   # boot manager and every generation's kernel .efi image.
