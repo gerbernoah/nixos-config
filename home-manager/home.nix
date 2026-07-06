@@ -75,6 +75,7 @@ in
 
   home.packages = with pkgs; [
     git
+    fuzzel # app launcher / menu bound to Mod+d (sway menu = "fuzzel")
     nixd # Nix language server (editor completion/go-to-def)
     alejandra # Nix formatter
     statix # Nix linter
@@ -94,6 +95,56 @@ in
     syntaxHighlighting.enable = true;
     shellAliases = {
       claude = "nix run github:ryoppippi/nix-claude-code#claude-fhs";
+    };
+  };
+
+  programs.alacritty = {
+    enable = true;
+    settings = {
+      font.size = 20.0;
+
+      # The actual default Linux virtual-console (TTY) 16-color palette:
+      # light-gray foreground on black, as seen on a bare kernel console.
+      colors = {
+        primary = {
+          background = "#000000";
+          foreground = "#aaaaaa";
+        };
+        cursor = {
+          text = "#000000";
+          cursor = "#aaaaaa";
+        };
+        normal = {
+          black = "#000000";
+          red = "#aa0000";
+          green = "#00aa00";
+          yellow = "#aa5500";
+          blue = "#0000aa";
+          magenta = "#aa00aa";
+          cyan = "#00aaaa";
+          white = "#aaaaaa";
+        };
+        bright = {
+          black = "#555555";
+          red = "#ff5555";
+          green = "#55ff55";
+          yellow = "#ffff55";
+          blue = "#5555ff";
+          magenta = "#ff55ff";
+          cyan = "#55ffff";
+          white = "#ffffff";
+        };
+      };
+
+      keyboard.bindings = [
+        {
+          key = "Return";
+          mods = "Shift";
+          # ESC + CR (\r); fromJSON gives the real control chars so the
+          # generated TOML matches the original hand-written config.
+          chars = builtins.fromJSON ''"\u001B\r"'';
+        }
+      ];
     };
   };
 
@@ -133,12 +184,24 @@ in
       terminal = "alacritty";
       menu = "fuzzel";
       focus.wrapping = "no";  
-      input."*".xkb_layout = "de";
-      
-      # waybar is used instead of the built-in sway bar
+      input = {
+        "*".xkb_layout = "de";
+        "type:touchpad".tap = "enabled";
+      };
+
+      window = {
+        titlebar = false;
+        border = 2;
+      };
+      floating = {
+        titlebar = false;
+        border = 2;
+      };
+
       bars = [ ];
 
       startup = [
+        { command = "waybar"; }
         { command = "dex --autostart --environment sway"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
