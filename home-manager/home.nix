@@ -3,10 +3,10 @@
 let
   mod = "Mod4";
 
-  defaultI3Keybindings = {
+  defaultSwayKeybindings = {
     "${mod}+Return" = "exec alacritty";
     "${mod}+Shift+q" = "kill";
-    "${mod}+d" = "exec rofi -show drun";
+    "${mod}+d" = "exec fuzzel";
 
     "${mod}+Left" = "focus left";
     "${mod}+Down" = "focus down";
@@ -59,7 +59,7 @@ let
     "${mod}+Shift+c" = "reload";
     "${mod}+Shift+r" = "restart";
     "${mod}+Shift+e" =
-      "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
+      "exec swaynag -t warning -m 'Do you want to exit sway?' -b 'Yes' 'swaymsg exit'";
 
     "${mod}+r" = "mode resize";
   };
@@ -120,29 +120,27 @@ in
     };
   };
 
-  # i3 window manager itself is enabled at the system level
-  # (services.xserver.windowManager.i3 in configuration.nix); this only
-  # takes over generating ~/.config/i3/config, replacing the file that
-  # i3-config-wizard originally wrote.
-  xsession.windowManager.i3 = {
+  # sway itself is enabled at the system level (programs.sway in
+  # configuration.nix); this only takes over generating
+  # ~/.config/sway/config.
+  wayland.windowManager.sway = {
     enable = true;
     config = {
       modifier = mod;
       terminal = "alacritty";
-      menu = "rofi -show drun";
+      menu = "fuzzel";
       focus.wrapping = "no";
 
-      # polybar is used instead of i3bar
+      # waybar is used instead of the built-in sway bar
       bars = [ ];
 
       startup = [
-        { command = "dex --autostart --environment i3"; notification = false; }
-        { command = "xss-lock --transfer-sleep-lock -- i3lock --nofork"; notification = false; }
-        { command = "nm-applet"; notification = false; }
-        { command = "1password --silent"; notification = false; }
+        { command = "dex --autostart --environment sway"; }
+        { command = "nm-applet --indicator"; }
+        { command = "1password --silent"; }
       ];
 
-      keybindings = defaultI3Keybindings // {
+      keybindings = defaultSwayKeybindings // {
         # vim-style focus/move, true hjkl orientation. Overrides the default
         # mod+h (split h) and mod+v (split v), which move to mod+n/mod+m below.
         "${mod}+h" = "focus left";
@@ -159,17 +157,123 @@ in
         "${mod}+m" = "split v";
         "${mod}+v" = null;
 
-        "XF86AudioRaiseVolume" = "exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+";
-        "XF86AudioLowerVolume" = "exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
-        "XF86AudioMute" = "exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-        "XF86AudioMicMute" = "exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-        "XF86MonBrightnessUp" = "exec --no-startup-id brightnessctl set +5%";
-        "XF86MonBrightnessDown" = "exec --no-startup-id brightnessctl set 5%-";
+        "XF86AudioRaiseVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+";
+        "XF86AudioLowerVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
+        "XF86AudioMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        "XF86AudioMicMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+        "XF86MonBrightnessUp" = "exec brightnessctl set +5%";
+        "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
       };
     };
 
     extraConfig = ''
-      tiling_drag modifier titlebar
+      tiling_drag enable
+      exec swayidle -w \
+        timeout 300 'swaylock -f' \
+        before-sleep 'swaylock -f'
+    '';
+  };
+
+  programs.waybar = {
+    enable = true;
+    settings = {
+      mainBar = {
+        layer = "top";
+        position = "top";
+        height = 28;
+
+        modules-left = [ "sway/workspaces" "sway/mode" ];
+        modules-center = [ "clock" ];
+        modules-right = [ "pulseaudio" "network" "battery" "tray" ];
+
+        "sway/workspaces" = {
+          disable-scroll = true;
+        };
+
+        clock = {
+          format = "{:%H:%M}";
+        };
+
+        battery = {
+          format = "{capacity}% {icon}";
+          format-icons = [ "" "" "" "" "" ];
+          states = {
+            warning = 30;
+            critical = 15;
+          };
+        };
+
+        network = {
+          format-wifi = "{essid} ({signalStrength}%)";
+          format-ethernet = "eth";
+          format-disconnected = "disconnected";
+        };
+
+        pulseaudio = {
+          format = "{volume}% {icon}";
+          format-muted = "muted";
+          format-icons = {
+            default = [ "" "" "" ];
+          };
+          on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        };
+
+        tray = {
+          spacing = 8;
+        };
+      };
+    };
+
+    style = ''
+      * {
+        font-family: monospace;
+        font-size: 13px;
+        border: none;
+        border-radius: 0;
+        min-height: 0;
+      }
+
+      window#waybar {
+        background-color: #282828;
+        color: #ebdbb2;
+      }
+
+      #workspaces button {
+        padding: 0 8px;
+        color: #ebdbb2;
+      }
+
+      #workspaces button.focused {
+        background-color: #458588;
+        color: #282828;
+      }
+
+      #workspaces button.urgent {
+        background-color: #cc241d;
+        color: #ebdbb2;
+      }
+
+      #clock,
+      #pulseaudio,
+      #network,
+      #battery,
+      #tray,
+      #mode {
+        padding: 0 10px;
+      }
+
+      #battery.warning {
+        color: #d79921;
+      }
+
+      #battery.critical {
+        color: #cc241d;
+      }
+
+      #mode {
+        background-color: #d79921;
+        color: #282828;
+      }
     '';
   };
 }
