@@ -38,6 +38,7 @@
     device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
     preLVM = true;
   };
+  boot.initrd.kernelModules = [ "amdgpu" ];
   boot.initrd.secrets = {
     "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
   };
