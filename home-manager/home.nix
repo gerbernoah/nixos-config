@@ -138,6 +138,7 @@ in
         { command = "dex --autostart --environment i3"; notification = false; }
         { command = "xss-lock --transfer-sleep-lock -- i3lock --nofork"; notification = false; }
         { command = "nm-applet"; notification = false; }
+        { command = "1password --silent"; notification = false; }
       ];
 
       keybindings = defaultI3Keybindings // {
