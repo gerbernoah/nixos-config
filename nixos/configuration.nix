@@ -37,6 +37,8 @@
   boot.initrd.secrets = {
     "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
   };
+  boot.consoleLogLevel = 3;
+  boot.kernelParams = [ "quite" ];
   boot.initrd.systemd.emergencyAccess = false;
 
   networking.hostName = "nix-frame"; # Define your hostname.
