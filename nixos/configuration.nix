@@ -10,6 +10,9 @@
       ./hardware-configuration.nix
     ];  
 
+  hardware.graphics.enable = true;
+  hardware.enableRedistributableFirmware = true;
+
   programs._1password = { enable = true; };
   programs._1password-gui = {
     enable = true;
