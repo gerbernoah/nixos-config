@@ -130,6 +130,7 @@ in
       modifier = mod;
       terminal = "alacritty";
       menu = "rofi -show drun";
+      focusWrapping = false;
 
       # polybar is used instead of i3bar
       bars = [ ];
