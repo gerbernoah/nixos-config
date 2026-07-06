@@ -81,6 +81,7 @@ in
     statix # Nix linter
     deadnix # finds unused Nix bindings
     inputs.claude-desktop.packages.${pkgs.system}.claude-desktop
+    jetbrains.idea # unified IDEA distribution (replaces old idea-ultimate/idea-community split); log in with your JetBrains account to unlock Ultimate features
   ];
 
   programs.direnv = {
