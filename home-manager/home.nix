@@ -70,6 +70,7 @@ in
   # Bump this only when you've read the release notes for the new value.
   home.stateVersion = "24.05";
 
+  programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
     git
