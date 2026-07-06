@@ -96,6 +96,16 @@ in
     shellAliases = {
       claude = "nix run github:ryoppippi/nix-claude-code#claude-fhs";
     };
+    # NixOS's system /etc/zshrc runs `dircolors -b` (default blue palette)
+    # after ~/.zshenv but before ~/.zshrc, so setting LS_COLORS via
+    # sessionVariables gets clobbered. initExtra runs at the end of
+    # ~/.zshrc, after that, so it wins.
+    # Dark-red, low-rainbow `ls`: directories/links/executables/special
+    # files in shades of red (31 = red, 01;31 = bright red); everything
+    # else falls back to the default foreground.
+    initExtra = ''
+      export LS_COLORS="di=01;31:ln=31:ex=01;31:so=31:pi=31:bd=31:cd=31:or=01;31:mi=01;31:su=31:sg=31:tw=01;31:ow=01;31:st=31"
+    '';
   };
 
   programs.alacritty = {
@@ -103,8 +113,13 @@ in
     settings = {
       font.size = 20.0;
 
-      # The actual default Linux virtual-console (TTY) 16-color palette:
-      # light-gray foreground on black, as seen on a bare kernel console.
+      # Retinted from the default Linux TTY 16-color palette: the cool
+      # slots (blue/magenta/cyan) are shifted to warm reds/roses/ambers,
+      # reusing the same brand reds as the prompt/vim (#d75f5f primary,
+      # #af5f5f secondary, #875f5f dim, #ff5f5f pop) so any app that
+      # renders via raw ANSI colors (incl. Claude Code's dark-ansi theme)
+      # reads darkish-red instead of rainbow. Hues stay distinct from each
+      # other for readability; black/white/grey are left neutral.
       colors = {
         primary = {
           background = "#000000";
@@ -117,21 +132,21 @@ in
         normal = {
           black = "#000000";
           red = "#aa0000";
-          green = "#00aa00";
-          yellow = "#aa5500";
-          blue = "#0000aa";
-          magenta = "#aa00aa";
-          cyan = "#00aaaa";
+          green = "#af5f00";
+          yellow = "#af8700";
+          blue = "#5f0000";
+          magenta = "#af005f";
+          cyan = "#875f5f";
           white = "#aaaaaa";
         };
         bright = {
           black = "#555555";
-          red = "#ff5555";
-          green = "#55ff55";
-          yellow = "#ffff55";
-          blue = "#5555ff";
-          magenta = "#ff55ff";
-          cyan = "#55ffff";
+          red = "#ff5f5f";
+          green = "#d78700";
+          yellow = "#ffaf5f";
+          blue = "#af5f5f";
+          magenta = "#ff5faf";
+          cyan = "#d75f5f";
           white = "#ffffff";
         };
       };
@@ -151,13 +166,31 @@ in
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
+    # Monochrome dark-red palette instead of starship's rainbow defaults.
+    # Reds: #d75f5f primary, #af5f5f secondary, #875f5f dim, #ff5f5f pop.
     settings = {
       format = "$directory$git_branch$git_commit$git_state$git_metrics$git_status$cmd_duration$line_break$jobs$time$battery$character";
+
+      directory.style = "bold #d75f5f";
+
+      git_branch.style = "#af5f5f";
+      git_commit.style = "#875f5f";
+      git_state.style = "#af5f5f";
+      git_status.style = "bold #ff5f5f";
+      git_metrics = {
+        added_style = "#af5f5f";
+        deleted_style = "bold #d75f5f";
+      };
+
+      cmd_duration.style = "#875f5f";
+
       time = {
         disabled = false;
         format = "[$time]($style) ";
         time_format = "%H:%M";
+        style = "#af5f5f";
       };
+
       battery = {
         full_symbol = "=";
         charging_symbol = "^";
@@ -165,8 +198,14 @@ in
         unknown_symbol = "?";
         empty_symbol = "x";
         display = [
-          { threshold = 100; style = "bold green"; }
+          { threshold = 20; style = "bold #ff5f5f"; }
+          { threshold = 100; style = "#af5f5f"; }
         ];
+      };
+
+      character = {
+        success_symbol = "[❯](#d75f5f)";
+        error_symbol = "[❯](bold #ff5f5f)";
       };
     };
   };
@@ -191,11 +230,11 @@ in
 
       window = {
         titlebar = false;
-        border = 4;
+        border = 2;
       };
       floating = {
         titlebar = false;
-        border = 4;
+        border = 2;
       };
 
       colors.focused = {
@@ -209,7 +248,8 @@ in
       bars = [ ];
 
       startup = [
-        { command = "waybar"; }
+        # waybar is managed by its own systemd user service
+        # (programs.waybar.systemd.enable), not launched here.
         { command = "dex --autostart --environment sway"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
@@ -251,19 +291,16 @@ in
 
   programs.waybar = {
     enable = true;
+    systemd.enable = true;
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
-        height = 28;
+        height = 32;
 
-        modules-left = [ "sway/workspaces" "sway/mode" ];
+        modules-left = [ "sway/mode" ];
         modules-center = [ "clock" ];
         modules-right = [ "pulseaudio" "network" "battery" "tray" ];
-
-        "sway/workspaces" = {
-          disable-scroll = true;
-        };
 
         clock = {
           format = "{:%H:%M}";
@@ -302,7 +339,7 @@ in
     style = ''
       * {
         font-family: monospace;
-        font-size: 13px;
+        font-size: 14px;
         border: none;
         border-radius: 0;
         min-height: 0;
@@ -310,21 +347,6 @@ in
 
       window#waybar {
         background-color: #282828;
-        color: #ebdbb2;
-      }
-
-      #workspaces button {
-        padding: 0 8px;
-        color: #ebdbb2;
-      }
-
-      #workspaces button.focused {
-        background-color: #458588;
-        color: #282828;
-      }
-
-      #workspaces button.urgent {
-        background-color: #cc241d;
         color: #ebdbb2;
       }
 
