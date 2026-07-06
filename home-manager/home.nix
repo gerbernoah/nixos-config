@@ -191,11 +191,19 @@ in
 
       window = {
         titlebar = false;
-        border = 2;
+        border = 4;
       };
       floating = {
         titlebar = false;
-        border = 2;
+        border = 4;
+      };
+
+      colors.focused = {
+        border = "#ff0000";
+        childBorder = "#ff0000";
+        background = "#ff0000";
+        text = "#ffffff";
+        indicator = "#ff0000";
       };
 
       bars = [ ];
