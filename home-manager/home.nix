@@ -70,8 +70,6 @@ in
   # Bump this only when you've read the release notes for the new value.
   home.stateVersion = "24.05";
 
-  # Lets home-manager manage itself (adds the `home-manager` command).
-  programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
     git
@@ -81,7 +79,8 @@ in
     statix # Nix linter
     deadnix # finds unused Nix bindings
     inputs.claude-desktop.packages.${pkgs.system}.claude-desktop
-    jetbrains.idea # unified IDEA distribution (replaces old idea-ultimate/idea-community split); log in with your JetBrains account to unlock Ultimate features
+    jetbrains.idea
+    discord-ptb 
   ];
 
   programs.direnv = {
@@ -97,13 +96,6 @@ in
     shellAliases = {
       claude = "nix run github:ryoppippi/nix-claude-code#claude-fhs";
     };
-    # NixOS's system /etc/zshrc runs `dircolors -b` (default blue palette)
-    # after ~/.zshenv but before ~/.zshrc, so setting LS_COLORS via
-    # sessionVariables gets clobbered. initExtra runs at the end of
-    # ~/.zshrc, after that, so it wins.
-    # Dark-red, low-rainbow `ls`: directories/links/executables/special
-    # files in shades of red (31 = red, 01;31 = bright red); everything
-    # else falls back to the default foreground.
     initExtra = ''
       export LS_COLORS="di=01;31:ln=31:ex=01;31:so=31:pi=31:bd=31:cd=31:or=01;31:mi=01;31:su=31:sg=31:tw=01;31:ow=01;31:st=31"
     '';
@@ -114,13 +106,6 @@ in
     settings = {
       font.size = 20.0;
 
-      # Retinted from the default Linux TTY 16-color palette: the cool
-      # slots (blue/magenta/cyan) are shifted to warm reds/roses/ambers,
-      # reusing the same brand reds as the prompt/vim (#d75f5f primary,
-      # #af5f5f secondary, #875f5f dim, #ff5f5f pop) so any app that
-      # renders via raw ANSI colors (incl. Claude Code's dark-ansi theme)
-      # reads darkish-red instead of rainbow. Hues stay distinct from each
-      # other for readability; black/white/grey are left neutral.
       colors = {
         primary = {
           background = "#000000";
@@ -156,8 +141,6 @@ in
         {
           key = "Return";
           mods = "Shift";
-          # ESC + CR (\r); fromJSON gives the real control chars so the
-          # generated TOML matches the original hand-written config.
           chars = builtins.fromJSON ''"\u001B\r"'';
         }
       ];
@@ -167,8 +150,6 @@ in
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    # Monochrome dark-red palette instead of starship's rainbow defaults.
-    # Reds: #d75f5f primary, #af5f5f secondary, #875f5f dim, #ff5f5f pop.
     settings = {
       format = "$directory$git_branch$git_commit$git_state$git_metrics$git_status$cmd_duration$line_break$jobs$time$battery$character";
 
@@ -211,9 +192,6 @@ in
     };
   };
 
-  # sway itself is enabled at the system level (programs.sway in
-  # configuration.nix); this only takes over generating
-  # ~/.config/sway/config.
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
@@ -249,16 +227,12 @@ in
       bars = [ ];
 
       startup = [
-        # waybar is managed by its own systemd user service
-        # (programs.waybar.systemd.enable), not launched here.
         { command = "dex --autostart --environment sway"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
       ];
 
       keybindings = defaultSwayKeybindings // {
-        # vim-style focus/move, true hjkl orientation. Overrides the default
-        # mod+h (split h) and mod+v (split v), which move to mod+n/mod+m below.
         "${mod}+h" = "focus left";
         "${mod}+j" = "focus down";
         "${mod}+k" = "focus up";
