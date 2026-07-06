@@ -130,7 +130,7 @@ in
       modifier = mod;
       terminal = "alacritty";
       menu = "rofi -show drun";
-      focusWrapping = false;
+      focus.wrapping = "no";
 
       # polybar is used instead of i3bar
       bars = [ ];
@@ -159,10 +159,10 @@ in
         "${mod}+m" = "split v";
         "${mod}+v" = null;
 
-        "XF86AudioRaiseVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && killall -SIGUSR1 i3status";
-        "XF86AudioLowerVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && killall -SIGUSR1 i3status";
-        "XF86AudioMute" = "exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && killall -SIGUSR1 i3status";
-        "XF86AudioMicMute" = "exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && killall -SIGUSR1 i3status";
+        "XF86AudioRaiseVolume" = "exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+";
+        "XF86AudioLowerVolume" = "exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
+        "XF86AudioMute" = "exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        "XF86AudioMicMute" = "exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
         "XF86MonBrightnessUp" = "exec --no-startup-id brightnessctl set +5%";
         "XF86MonBrightnessDown" = "exec --no-startup-id brightnessctl set 5%-";
       };
