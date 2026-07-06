@@ -74,15 +74,17 @@
   services.xserver.xkb.layout = "de";
   services.xserver.xkb.options = "eurosign:e,caps:escape";
 
-  services.xserver.windowManager.i3 = {
-  enable = true;
-  extraPackages = with pkgs; [
-      rofi
-      polybar
-      picom
-      feh
-    ];
+  programs.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true;
+    extraPackages = with pkgs; [ swaylock swayidle fuzzel ];
   };
+
+  # Chromium-based apps (chromium, 1password-gui, claude-desktop) use native
+  # Wayland instead of XWayland. Sets --ozone-platform-hint=auto, which falls
+  # back to X11 automatically when there's no Wayland display.
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
   # Enable CUPS to print documents.
   # services.printing.enable = true;
 
@@ -93,6 +95,15 @@
     enable = true;
     pulse.enable = true;
   };
+
+  # Bluetooth (headphones etc.). WirePlumber, used by pipewire above, picks
+  # up A2DP audio automatically once bluez is running - no extra audio config
+  # needed. blueman gives a GUI (`blueman-manager`) instead of bluetoothctl.
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+  services.blueman.enable = true;
 
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
