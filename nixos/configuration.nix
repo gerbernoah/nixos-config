@@ -8,8 +8,10 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-    ];
- 
+    ];  
+  security.polkit.enable = true; 
+  security.pam.services.swaylock = {};
+
   programs._1password = { enable = true; };
   programs._1password-gui = {
     enable = true;
@@ -75,12 +77,6 @@
   # Configure keymap in X11
   services.xserver.xkb.layout = "de";
   services.xserver.xkb.options = "eurosign:e,caps:escape";
-
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
-    extraPackages = with pkgs; [ swaylock swayidle fuzzel ];
-  };
 
   # Chromium-based apps (chromium, 1password-gui, claude-desktop) use native
   # Wayland instead of XWayland. Sets --ozone-platform-hint=auto, which falls
