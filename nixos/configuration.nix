@@ -28,7 +28,7 @@
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.extraModprobeConfig = ''
-    options cfg80211 ieee80211_regdom="CH"
+    options cfg80211 ieee80211_regdom="JP"
   '';
 
   boot.lanzaboote = {
