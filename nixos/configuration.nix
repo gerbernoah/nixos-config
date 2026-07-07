@@ -17,6 +17,7 @@
   hardware.graphics.enable = true;
   hardware.enableRedistributableFirmware = true;
 
+  programs.nix-ld.enable = true;
   programs._1password = { enable = true; };
   programs._1password-gui = {
     enable = true;
@@ -86,9 +87,6 @@
   services.xserver.xkb.layout = "de";
   services.xserver.xkb.options = "eurosign:e,caps:escape";
 
-  # Chromium-based apps (chromium, 1password-gui, claude-desktop) use native
-  # Wayland instead of XWayland. Sets --ozone-platform-hint=auto, which falls
-  # back to X11 automatically when there's no Wayland display.
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # Enable CUPS to print documents.
