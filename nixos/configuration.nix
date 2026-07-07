@@ -19,10 +19,10 @@
 
   services.fwupd.enable = true;
 
-  services.logind.extraConfig = ''
-    HandleLidSwitch=suspend
-    HandleLidSwitchExternalPower=suspend
-  '';
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "suspend";
+  };
 
   programs.nix-ld.enable = true;
   programs._1password = { enable = true; };
