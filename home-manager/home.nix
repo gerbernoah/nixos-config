@@ -70,6 +70,8 @@ in
     homeDirectory = "/home/ngerber";
     # Bump this only when you've read the release notes for the new value.
     stateVersion = "24.05";
+    
+    nixpkgs.config.allowUnfree = true;
 
     packages = with pkgs; [
       git
@@ -143,11 +145,15 @@ in
     '';
   };
 
+
   programs = {
     home-manager.enable = true;
 
     chromium = {
       enable = true;
+      package = pkgs.chromium.override {
+        enableWideVine = true;
+      };
       extensions = [
         "aeblfdkhhhdcdjpifhhbdiojplfjncoa" # 1Password
       ];
