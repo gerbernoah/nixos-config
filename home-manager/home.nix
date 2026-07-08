@@ -82,6 +82,65 @@ in
       jetbrains.idea
       docker-compose
     ];
+
+    file.".vimrc".text = ''
+      set number
+      set relativenumber
+      syntax on
+      set mouse=a
+
+      if exists('+termguicolors')
+        set termguicolors
+      endif
+      set background=dark
+
+      " Dark-redish colorscheme, matching the terminal/prompt palette
+      " (#d75f5f primary, #af5f5f secondary, #875f5f dim, #ff5f5f pop).
+      " A couple of warm accents (gold for literals, muted teal for
+      " types/preproc) are kept so distinct syntax kinds stay readable.
+      hi Normal       guifg=#aaaaaa guibg=#000000 ctermfg=248 ctermbg=0
+      hi Comment      guifg=#875f5f ctermfg=95 cterm=italic gui=italic
+      hi Constant     guifg=#d78700 ctermfg=172
+      hi String       guifg=#d78700 ctermfg=172
+      hi Number       guifg=#d78700 ctermfg=172
+      hi Identifier   guifg=#af5f5f ctermfg=131
+      hi Function     guifg=#af5f5f ctermfg=131 gui=bold cterm=bold
+      hi Statement    guifg=#d75f5f ctermfg=167 gui=bold cterm=bold
+      hi Keyword      guifg=#d75f5f ctermfg=167 gui=bold cterm=bold
+      hi Conditional  guifg=#d75f5f ctermfg=167
+      hi Repeat       guifg=#d75f5f ctermfg=167
+      hi Operator     guifg=#d75f5f ctermfg=167
+      hi PreProc      guifg=#5f8787 ctermfg=66
+      hi Include      guifg=#5f8787 ctermfg=66
+      hi Type         guifg=#5f8787 ctermfg=66
+      hi StorageClass guifg=#5f8787 ctermfg=66
+      hi Special      guifg=#d78700 ctermfg=172
+      hi Delimiter    guifg=#af5f5f ctermfg=131
+      hi Error        guifg=#ffffff guibg=#ff5f5f ctermfg=15 ctermbg=203 gui=bold cterm=bold
+      hi Todo         guifg=#ff5f5f guibg=#000000 ctermfg=203 ctermbg=0 gui=bold cterm=bold
+      hi LineNr       guifg=#875f5f ctermfg=95
+      hi CursorLineNr guifg=#ff5f5f ctermfg=203 gui=bold cterm=bold
+      hi CursorLine   guibg=#2a0000 ctermbg=52
+      hi Visual       guibg=#5f0000 ctermbg=52
+      hi Search       guifg=#000000 guibg=#d78700 ctermfg=0 ctermbg=172
+      hi IncSearch    guifg=#000000 guibg=#ff5f5f ctermfg=0 ctermbg=203
+      hi MatchParen   guifg=#ffffff guibg=#5f0000 ctermfg=15 ctermbg=52 gui=bold cterm=bold
+      hi StatusLine   guifg=#000000 guibg=#af5f5f ctermfg=0 ctermbg=131
+      hi StatusLineNC guifg=#875f5f guibg=#1a0000 ctermfg=95 ctermbg=0
+      hi VertSplit    guifg=#5f0000 guibg=#5f0000 ctermfg=52 ctermbg=52
+      hi Pmenu        guifg=#aaaaaa guibg=#2a0000 ctermfg=248 ctermbg=52
+      hi PmenuSel     guifg=#000000 guibg=#d75f5f ctermfg=0 ctermbg=167
+
+      set tabstop=2
+      set shiftwidth=2
+      set expandtab
+      set smartindent
+
+      set hlsearch
+      set incsearch
+      set clipboard=unnamedplus
+      set noswapfile
+    '';
   };
 
   programs = {
