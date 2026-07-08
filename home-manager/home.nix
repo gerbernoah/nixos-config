@@ -65,13 +65,14 @@ let
   };
 in
 {
+  nixpkgs.config.allowUnfree = true;
+ 
   home = {
     username = "ngerber";
     homeDirectory = "/home/ngerber";
     # Bump this only when you've read the release notes for the new value.
     stateVersion = "24.05";
     
-    nixpkgs.config.allowUnfree = true;
 
     packages = with pkgs; [
       git
