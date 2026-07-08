@@ -1,125 +1,240 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-
 { config, lib, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];  
-  
-  virtualisation.docker.enable = true;
-  virtualisation.docker.enableOnBoot = false;
-  
-  hardware.wirelessRegulatoryDatabase = true;
-  hardware.graphics.enable = true;
-  hardware.enableRedistributableFirmware = true;
+  imports = [
+    ./hardware-configuration.nix
+  ];
 
-  services.fwupd.enable = true;
+  boot = {
+    consoleLogLevel = 3;
+    kernelParams = [ "quiet" ];
+    supportedFilesystems = [ "zfs" ];
+    zfs.forceImportRoot = false;
 
-  services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "suspend";
+    extraModprobeConfig = ''
+      options cfg80211 ieee80211_regdom="JP"
+    '';
+
+    initrd = {
+      kernelModules = [ "amdgpu" ];
+      systemd.emergencyAccess = false;
+
+      secrets = {
+        "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
+      };
+
+      luks.devices."cryptroot" = {
+        device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
+        preLVM = true;
+      };
+    };
+
+    loader = {
+      systemd-boot.enable = lib.mkForce false;
+      efi.canTouchEfiVariables = true;
+    };
+
+    lanzaboote = {
+      enable = true;
+      pkiBundle = "/etc/secureboot";
+    };
   };
 
-  programs.nix-ld.enable = true;
-  programs._1password = { enable = true; };
-  programs._1password-gui = {
+  virtualisation.docker = {
     enable = true;
-    polkitPolicyOwners = [ "ngerber" ];
+    enableOnBoot = false;
   };
- 
-  programs.zsh.enable = true;
-  programs.sway.enable = true;
 
-  boot.loader.systemd-boot.enable = lib.mkForce false;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.extraModprobeConfig = ''
-    options cfg80211 ieee80211_regdom="JP"
-  '';
+  hardware = {
+    wirelessRegulatoryDatabase = true;
+    graphics.enable = true;
+    enableRedistributableFirmware = true;
 
-  boot.lanzaboote = {
-    enable = true;
-    pkiBundle = "/etc/secureboot";
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+    };
   };
-  
-  boot.supportedFilesystems = [ "zfs" ];
-  boot.zfs.forceImportRoot = false;
-  boot.initrd.luks.devices."cryptroot" = {
-    device = "/dev/disk/by-uuid/3150b78f-729d-4e06-a4d8-b4cb2e271e93";
-    preLVM = true;
-  };
-  boot.initrd.kernelModules = [ "amdgpu" ];
-  boot.initrd.secrets = {
-    "/boot/keys/zfs.key" = "/boot/keys/zfs.key";
-  };
-  boot.consoleLogLevel = 3;
-  boot.kernelParams = [ "quite" ];
-  boot.initrd.systemd.emergencyAccess = false;
 
-  networking.hostName = "nix-frame"; # Define your hostname.
-  networking.hostId = "d38345c2";
+  programs = {
+    nix-ld.enable = true;
+    zsh.enable = true;
+    sway.enable = true;
+    vim.enable = true;
 
-  # Set your time zone.
+    _1password.enable = true;
+    _1password-gui = {
+      enable = true;
+      polkitPolicyOwners = [ "ngerber" ];
+    };
+  };
+
+  nixpkgs.config = {
+    allowUnfree = true;
+    chromium.enableWideVine = true;
+  };
+
+  networking = {
+    hostName = "nix-frame";
+    hostId = "d38345c2";
+
+    networkmanager = {
+      enable = true;
+      wifi.macAddress = "stable";
+    };
+  };
+
   time.timeZone = "Europe/Zurich";
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-  networking.networkmanager = {
-    enable = true;
-    wifi.macAddress = "stable";
-  };
-  
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
+
   console = {
     enable = true;
     font = "ter-v32b";
     packages = with pkgs; [ terminus_font ];
     keyMap = "de";
-  
-    colors = [ 
+
+    colors = [
       "282828" "cc241d" "98971a" "d79921" "458588" "b16286" "689d6a" "a89984"
       "928374" "fb4934" "b8bb26" "fabd2f" "83a598" "d3869b" "8ec07c" "ebdbb2"
     ];
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  services = {
+    fwupd.enable = true;
 
-  # Configure keymap in X11
-  services.xserver.xkb.layout = "de";
-  services.xserver.xkb.options = "eurosign:e,caps:escape";
+    # TLP handles CPU EPP, PCIe ASPM, USB/SATA autosuspend etc. per AC/battery
+    # state. Must be paired with power-profiles-daemon disabled below - the
+    # two conflict over who owns CPU power policy.
+    tlp = {
+      enable = true;
+      settings = {
+        # amd-pstate is in "active" mode (confirmed via
+        # /sys/devices/system/cpu/amd_pstate/status); EPP does the real work,
+        # so keep the governor on powersave and drive behavior via EPP.
+        CPU_SCALING_GOVERNOR_ON_AC = "powersave";
+        CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+        CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
+        CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
 
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
+        CPU_BOOST_ON_AC = 1;
+        CPU_BOOST_ON_BAT = 0;
 
-  # Enable sound.
-  # hardware.pulseaudio.enable = true;
-  # OR
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
+        # Framework exposes an ACPI platform_profile; let TLP push it low on
+        # battery (fans/firmware back off further than EPP alone achieves).
+        PLATFORM_PROFILE_ON_AC = "balanced";
+        PLATFORM_PROFILE_ON_BAT = "low-power";
+
+        PCIE_ASPM_ON_AC = "default";
+        PCIE_ASPM_ON_BAT = "powersupersave";
+
+        USB_AUTOSUSPEND = 1;
+
+        SATA_LINKPWR_ON_AC = "med_power_with_dipm";
+        SATA_LINKPWR_ON_BAT = "min_power";
+
+        RUNTIME_PM_ON_AC = "auto";
+        RUNTIME_PM_ON_BAT = "auto";
+      };
+    };
+
+    power-profiles-daemon.enable = lib.mkForce false;
+
+    logind.settings.Login = {
+      HandleLidSwitch = "suspend";
+      HandleLidSwitchExternalPower = "suspend";
+    };
+
+    xserver = {
+      enable = true;
+      xkb = {
+        layout = "de";
+        options = "eurosign:e,caps:escape";
+      };
+    };
+
+    pipewire = {
+      enable = true;
+      pulse.enable = true;
+    };
+
+    blueman.enable = true;
+
+    libinput.enable = true;
+
+    udev.packages = [ pkgs.brightnessctl ];
   };
 
-  # Bluetooth (headphones etc.). WirePlumber, used by pipewire above, picks
-  # up A2DP audio automatically once bluez is running - no extra audio config
-  # needed. blueman gives a GUI (`blueman-manager`) instead of bluetoothctl.
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
+  environment = {
+    sessionVariables.NIXOS_OZONE_WL = "1";
+
+    systemPackages = with pkgs; [
+      wget
+      tree
+      sbctl
+      brightnessctl
+    ];
+
+    etc."vimrc".text = ''
+      set number
+      set relativenumber
+      syntax on
+      set mouse=a
+
+      if exists('+termguicolors')
+        set termguicolors
+      endif
+      set background=dark
+
+      " Dark-redish colorscheme, matching the terminal/prompt palette
+      " (#d75f5f primary, #af5f5f secondary, #875f5f dim, #ff5f5f pop).
+      " A couple of warm accents (gold for literals, muted teal for
+      " types/preproc) are kept so distinct syntax kinds stay readable.
+      hi Normal       guifg=#aaaaaa guibg=#000000 ctermfg=248 ctermbg=0
+      hi Comment      guifg=#875f5f ctermfg=95 cterm=italic gui=italic
+      hi Constant     guifg=#d78700 ctermfg=172
+      hi String       guifg=#d78700 ctermfg=172
+      hi Number       guifg=#d78700 ctermfg=172
+      hi Identifier   guifg=#af5f5f ctermfg=131
+      hi Function     guifg=#af5f5f ctermfg=131 gui=bold cterm=bold
+      hi Statement    guifg=#d75f5f ctermfg=167 gui=bold cterm=bold
+      hi Keyword      guifg=#d75f5f ctermfg=167 gui=bold cterm=bold
+      hi Conditional  guifg=#d75f5f ctermfg=167
+      hi Repeat       guifg=#d75f5f ctermfg=167
+      hi Operator     guifg=#d75f5f ctermfg=167
+      hi PreProc      guifg=#5f8787 ctermfg=66
+      hi Include      guifg=#5f8787 ctermfg=66
+      hi Type         guifg=#5f8787 ctermfg=66
+      hi StorageClass guifg=#5f8787 ctermfg=66
+      hi Special      guifg=#d78700 ctermfg=172
+      hi Delimiter    guifg=#af5f5f ctermfg=131
+      hi Error        guifg=#ffffff guibg=#ff5f5f ctermfg=15 ctermbg=203 gui=bold cterm=bold
+      hi Todo         guifg=#ff5f5f guibg=#000000 ctermfg=203 ctermbg=0 gui=bold cterm=bold
+      hi LineNr       guifg=#875f5f ctermfg=95
+      hi CursorLineNr guifg=#ff5f5f ctermfg=203 gui=bold cterm=bold
+      hi CursorLine   guibg=#2a0000 ctermbg=52
+      hi Visual       guibg=#5f0000 ctermbg=52
+      hi Search       guifg=#000000 guibg=#d78700 ctermfg=0 ctermbg=172
+      hi IncSearch    guifg=#000000 guibg=#ff5f5f ctermfg=0 ctermbg=203
+      hi MatchParen   guifg=#ffffff guibg=#5f0000 ctermfg=15 ctermbg=52 gui=bold cterm=bold
+      hi StatusLine   guifg=#000000 guibg=#af5f5f ctermfg=0 ctermbg=131
+      hi StatusLineNC guifg=#875f5f guibg=#1a0000 ctermfg=95 ctermbg=0
+      hi VertSplit    guifg=#5f0000 guibg=#5f0000 ctermfg=52 ctermbg=52
+      hi Pmenu        guifg=#aaaaaa guibg=#2a0000 ctermfg=248 ctermbg=52
+      hi PmenuSel     guifg=#000000 guibg=#d75f5f ctermfg=0 ctermbg=167
+
+      set tabstop=2
+      set shiftwidth=2
+      set expandtab
+      set smartindent
+
+      set hlsearch
+      set incsearch
+      set clipboard=unnamedplus
+      set noswapfile
+    '';
   };
-  services.blueman.enable = true;
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.ngerber = {
     isNormalUser = true;
     description = "ngerber";
@@ -132,68 +247,11 @@
     ];
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    alacritty
-    chromium
-    tree
-    sbctl
-    brightnessctl
-  ];
+  system = {
+    stateVersion = "24.05"; 
+  };
 
-  # brightnessctl ships a udev rule that chgrp/chmod's the backlight sysfs
-  # file to group "video" on add; without registering the package here the
-  # rule never runs and the file stays root-owned/read-only.
-  services.udev.packages = [ pkgs.brightnessctl ];
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "24.05"; # Did you read the comment?
-
-  nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = ["nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
 
 # --- Parked idea: ZFS key from removable stick instead of baked into initrd ---
