@@ -376,9 +376,15 @@ in
       terminal = "alacritty";
       menu = "fuzzel";
       focus.wrapping = "no";
+      
       input = {
         "*".xkb_layout = "de";
         "type:touchpad".tap = "enabled";
+      };
+      output = {
+        "*" = {
+          scale = "1.5";
+        };
       };
 
       window = {
