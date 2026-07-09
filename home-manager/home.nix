@@ -192,7 +192,7 @@ in
     alacritty = {
       enable = true;
       settings = {
-        font.size = 20.0;
+        font.size = 14.0;
 
         colors = {
           primary = {
