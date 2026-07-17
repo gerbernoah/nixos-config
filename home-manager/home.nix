@@ -422,6 +422,7 @@ in
 
       startup = [
         { command = "dex --autostart --environment sway"; }
+        { command = "solaar --window=hide"; } # background daemon: reapplies MX Master 4 DPI on connect
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
         { command = "waybar"; }
