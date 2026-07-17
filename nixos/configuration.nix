@@ -167,8 +167,13 @@
     udev.packages = [ pkgs.brightnessctl ];
   };
 
-  hardware.logitech.wireless.enable = true; # HID++ udev rules -> non-root access to the mouse
+  hardware.logitech.wireless.enable = true; # HID++ udev rules for USB Unifying/Bolt receivers
   # Solaar package itself is installed via Home Manager (see home-manager/home.nix).
+  # The module's rules only cover USB receivers; the MX Master 4 connects over Bluetooth
+  # (uhid device, bus 0005), so grant the local user access to Logitech BT hidraw nodes too.
+  services.udev.extraRules = ''
+    KERNEL=="hidraw*", KERNELS=="0005:046D:*", MODE="0660", GROUP="users", TAG+="uaccess"
+  '';
 
   environment = {
     sessionVariables.NIXOS_OZONE_WL = "1";
