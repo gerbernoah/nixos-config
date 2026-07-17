@@ -167,6 +167,9 @@
     udev.packages = [ pkgs.brightnessctl ];
   };
 
+  hardware.logitech.wireless.enable = true; # HID++ udev rules -> non-root access to the mouse
+  # Solaar package itself is installed via Home Manager (see home-manager/home.nix).
+
   environment = {
     sessionVariables.NIXOS_OZONE_WL = "1";
 

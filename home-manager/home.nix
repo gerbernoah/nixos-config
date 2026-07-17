@@ -82,6 +82,7 @@ in
       inputs.claude-desktop.packages.${pkgs.system}.claude-desktop
       jetbrains.idea
       docker-compose
+      solaar # Logitech HID++ config (MX Master 4 DPI); needs the udev rules from the NixOS config
     ];
 
     file.".vimrc".text = ''
@@ -384,6 +385,18 @@ in
       output = {
         "*" = {
           scale = "1.5";
+        };
+        # Laptop on the left (anchor), external HP monitor on the right — matches physical layout.
+        # Identify the external by make/model/serial so it works on any port.
+        # It's a low-density 27" 1920x1200 panel, so scale 1.0 (native) instead of the
+        # laptop's 1.5 — keeps UI size and pointer speed roughly consistent across screens.
+        # eDP-2 logical width = 2560 / 1.5 = 1706, so the external starts at x=1706.
+        "eDP-2" = {
+          position = "0 0";
+        };
+        "HP Inc. HP 527pq VNG5120026" = {
+          position = "1706 0";
+          scale = "1.0";
         };
       };
 
