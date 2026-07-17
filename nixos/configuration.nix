@@ -175,6 +175,23 @@
     KERNEL=="hidraw*", KERNELS=="0005:046D:*", MODE="0660", GROUP="users", TAG+="uaccess"
   '';
 
+  # amdgpu GFXOFF power-gates the graphics engine when idle; on this APU the wake
+  # latency caused multi-second input lag in fullscreen Chrome after sitting idle
+  # (clocks were fine - engine was gated off). Disable GFXOFF at boot via debugfs.
+  systemd.services.disable-amdgpu-gfxoff = {
+    description = "Disable amdgpu GFXOFF (fixes idle input lag)";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "disable-gfxoff" ''
+        for f in /sys/kernel/debug/dri/*/amdgpu_gfxoff; do
+          [ -e "$f" ] && echo 0 > "$f"
+        done
+      '';
+    };
+  };
+
   environment = {
     sessionVariables.NIXOS_OZONE_WL = "1";
 
