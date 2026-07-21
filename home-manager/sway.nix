@@ -3,6 +3,20 @@
 let
   mod = "Mod4";
 
+  # Brightness keys dim the internal laptop backlight (eDP-2, via brightnessctl)
+  # AND any DDC/CI-capable external monitor (via ddcutil, VCP 0x10 = luminance).
+  # ddcutil is backgrounded so the keypress feels instant, and silently no-ops
+  # when no external is connected. Requires hardware.i2c.enable + `i2c` group
+  # (set in nixos/configuration.nix).
+  brightnessScript = pkgs.writeShellScript "brightness-adjust" ''
+    case "$1" in
+      up)   ${pkgs.brightnessctl}/bin/brightnessctl set +5% ; sign=+ ;;
+      down) ${pkgs.brightnessctl}/bin/brightnessctl set 5%- ; sign=- ;;
+      *)    exit 1 ;;
+    esac
+    ${pkgs.ddcutil}/bin/ddcutil --noverify setvcp 10 "$sign" 5 >/dev/null 2>&1 || true
+  '';
+
   defaultSwayKeybindings = {
     "${mod}+Return" = "exec alacritty";
     "${mod}+Shift+q" = "kill";
@@ -151,8 +165,8 @@ in
         "XF86AudioLowerVolume" = "exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
         "XF86AudioMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
         "XF86AudioMicMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-        "XF86MonBrightnessUp" = "exec brightnessctl set +5%";
-        "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
+        "XF86MonBrightnessUp" = "exec ${brightnessScript} up";
+        "XF86MonBrightnessDown" = "exec ${brightnessScript} down";
       };
     };
 

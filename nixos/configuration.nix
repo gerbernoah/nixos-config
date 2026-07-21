@@ -53,6 +53,12 @@
     };
     enableRedistributableFirmware = true;
 
+    # DDC/CI over I2C so external monitors (e.g. the LG UltraGear on DP-4) can
+    # have their hardware backlight driven via ddcutil. Creates the `i2c` group
+    # and udev rules for /dev/i2c-*; the user is added to `i2c` below. The
+    # laptop panel (eDP-2) still uses brightnessctl - it has no DDC bus.
+    i2c.enable = true;
+
     bluetooth = {
       enable = true;
       powerOnBoot = true;
@@ -183,6 +189,7 @@
       tree
       sbctl
       brightnessctl
+      ddcutil
     ];
   };
 
@@ -195,6 +202,7 @@
       "networkmanager"
       "video"
       "docker"
+      "i2c" # access to /dev/i2c-* for ddcutil (external monitor brightness)
     ];
   };
 
