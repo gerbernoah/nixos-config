@@ -83,6 +83,7 @@ in
       jetbrains.idea
       docker-compose
       solaar # Logitech HID++ config (MX Master 4 DPI); needs the udev rules from the NixOS config
+      pavucontrol # GUI audio mixer / output-device picker (PipeWire compatible)
     ];
 
     file.".vimrc".text = ''
