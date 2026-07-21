@@ -84,18 +84,10 @@ in
         "*" = {
           scale = "1.0"; # default: native scaling for external/low-density panels
         };
-        # Laptop on the left (anchor), external HP monitor on the right — matches physical layout.
-        # Identify the external by make/model/serial so it works on any port.
-        # It's a low-density 27" 1920x1200 panel, so scale 1.0 (native) instead of the
-        # laptop's 1.5 — keeps UI size and pointer speed roughly consistent across screens.
-        # eDP-2 logical width = 2560 / 1.5 = 1706, so the external starts at x=1706.
+        # Hi-DPI laptop panel needs upscaling; the 1.0 default is only right for externals.
         "eDP-2" = {
           position = "0 0";
-          scale = "1.5"; # hi-DPI laptop panel needs upscaling; the 1.0 default is only right for externals
-        };
-        "HP Inc. HP 527pq VNG5120026" = {
-          position = "1706 0";
-          scale = "1.0";
+          scale = "1.5";
         };
       };
 
