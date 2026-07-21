@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 let
   mod = "Mod4";
@@ -65,6 +65,20 @@ let
   };
 in
 {
+  # Cursor theme for BOTH cursor paths:
+  #  - sets XCURSOR_THEME/XCURSOR_SIZE in the session env (client-drawn cursors:
+  #    Zed, JetBrains) — this is what makes their drag cursor resolve at all;
+  #  - configures GTK.
+  # The sway `seat` line below covers the compositor-drawn path (cursor-shape-v1:
+  # Chromium, Alacritty). Note: client-drawn apps use a fixed pixel size and
+  # ignore per-output scale, so they render ~24px on every monitor.
+  home.pointerCursor = {
+    name = "Adwaita";
+    package = pkgs.adwaita-icon-theme;
+    size = 24;
+    gtk.enable = true;
+  };
+
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
@@ -143,6 +157,7 @@ in
     };
 
     extraConfig = ''
+      seat "*" xcursor_theme Adwaita 24
       tiling_drag enable
       exec swayidle -w \
         timeout 300 'swaylock -f' \
