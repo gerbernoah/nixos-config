@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   mod = "Mod4";
@@ -15,6 +15,24 @@ let
       *)    exit 1 ;;
     esac
     ${pkgs.ddcutil}/bin/ddcutil --noverify setvcp 10 "$sign" 5 >/dev/null 2>&1 || true
+  '';
+
+  # Screenshots: grimshot (sway's grim/slurp/wl-copy wrapper) writes a PNG to
+  # ~/Pictures/Screenshots AND puts it on the clipboard, with a libnotify popup.
+  # "area" prompts a region drag; "output"/"active" grab the focused
+  # monitor/window with no prompt. The wrapper bundles its own deps.
+  #
+  # The dir is set inside the script (not just via home.sessionVariables) so it
+  # works even in a sway session started before the variable was exported.
+  grimshot = "${pkgs.sway-contrib.grimshot}/bin/grimshot";
+  screenshotScript = pkgs.writeShellScript "screenshot" ''
+    export XDG_SCREENSHOTS_DIR="$HOME/Pictures/Screenshots"
+    mkdir -p "$XDG_SCREENSHOTS_DIR"
+    exec ${grimshot} --notify savecopy "$1"
+  '';
+  # Mod+Print: region → swappy for cropping/annotation before you save it.
+  annotateScript = pkgs.writeShellScript "screenshot-annotate" ''
+    ${grimshot} save area - | ${pkgs.swappy}/bin/swappy -f -
   '';
 
   defaultSwayKeybindings = {
@@ -84,6 +102,28 @@ in
     package = pkgs.adwaita-icon-theme;
     size = 20;
     gtk.enable = true;
+  };
+
+  # Where grimshot drops PNGs (named <timestamp>_grim.png). tmpfiles-style
+  # activation ensures the dir exists on first switch.
+  home.sessionVariables.XDG_SCREENSHOTS_DIR = "${config.home.homeDirectory}/Pictures/Screenshots";
+  home.activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "${config.home.homeDirectory}/Pictures/Screenshots"
+  '';
+
+  # wl-clipboard (wl-copy/wl-paste), grim + slurp, and swappy on PATH for
+  # manual/scripted captures beyond the keybindings.
+  home.packages = with pkgs; [ wl-clipboard grim slurp swappy ];
+
+  # Notification daemon — required for grimshot's --notify "screenshot saved"
+  # popups (and any other app notifications) to actually appear. Runs as a
+  # user service tied to the sway session target.
+  services.mako = {
+    enable = true;
+    settings = {
+      default-timeout = 4000;
+      border-radius = 4;
+    };
   };
 
   wayland.windowManager.sway = {
@@ -160,6 +200,11 @@ in
         "XF86AudioMicMute" = "exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
         "XF86MonBrightnessUp" = "exec ${brightnessScript} up";
         "XF86MonBrightnessDown" = "exec ${brightnessScript} down";
+
+        "Print" = "exec ${screenshotScript} area";
+        "Shift+Print" = "exec ${screenshotScript} output";
+        "Ctrl+Print" = "exec ${screenshotScript} active";
+        "${mod}+Print" = "exec ${annotateScript}";
       };
     };
 
