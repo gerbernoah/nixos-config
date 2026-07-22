@@ -79,17 +79,10 @@ let
   };
 in
 {
-  # Cursor theme for BOTH cursor paths:
-  #  - sets XCURSOR_THEME/XCURSOR_SIZE in the session env (client-drawn cursors:
-  #    Zed, JetBrains) — this is what makes their drag cursor resolve at all;
-  #  - configures GTK.
-  # The sway `seat` line below covers the compositor-drawn path (cursor-shape-v1:
-  # Chromium, Alacritty). Note: client-drawn apps use a fixed pixel size and
-  # ignore per-output scale, so they render ~24px on every monitor.
   home.pointerCursor = {
     name = "Adwaita";
     package = pkgs.adwaita-icon-theme;
-    size = 24;
+    size = 20;
     gtk.enable = true;
   };
 
