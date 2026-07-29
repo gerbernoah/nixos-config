@@ -6,6 +6,7 @@
     ./programs/zed.nix
     ./programs/chromium.nix
     ./programs/direnv.nix
+    ./programs/imv.nix
     ./programs/zsh.nix
     ./programs/alacritty.nix
     ./programs/starship.nix
