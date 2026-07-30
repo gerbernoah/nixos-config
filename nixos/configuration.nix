@@ -99,7 +99,7 @@
     enable = true;
     font = "ter-v32b";
     packages = with pkgs; [ terminus_font ];
-    keyMap = "de";
+    keyMap = "us";
 
     colors = [
       "282828" "cc241d" "98971a" "d79921" "458588" "b16286" "689d6a" "a89984"
@@ -156,7 +156,7 @@
     xserver = {
       enable = true;
       xkb = {
-        layout = "de";
+        layout = "us";
         options = "eurosign:e,caps:escape";
       };
     };
@@ -179,6 +179,12 @@
   # (uhid device, bus 0005), so grant the local user access to Logitech BT hidraw nodes too.
   services.udev.extraRules = ''
     KERNEL=="hidraw*", KERNELS=="0005:046D:*", MODE="0660", GROUP="users", TAG+="uaccess"
+
+    # NuPhy (19F5) keyboards: the web configurator at drive.nuphy.io drives the
+    # keyboard's vendor HID interface over WebHID, so Chromium needs rw on the
+    # hidraw node. Covers USB/2.4GHz dongle (bus 0003) and Bluetooth (bus 0005).
+    KERNEL=="hidraw*", KERNELS=="0003:19F5:*", MODE="0660", GROUP="users", TAG+="uaccess"
+    KERNEL=="hidraw*", KERNELS=="0005:19F5:*", MODE="0660", GROUP="users", TAG+="uaccess"
   '';
 
   environment = {

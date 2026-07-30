@@ -138,7 +138,7 @@ in
       focus.wrapping = "no";
 
       input = {
-        "*".xkb_layout = "de";
+        "*".xkb_layout = "us";
         "type:touchpad".tap = "enabled";
       };
       output = {
