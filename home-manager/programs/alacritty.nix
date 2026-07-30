@@ -8,11 +8,11 @@
       colors = {
         primary = {
           background = "#000000";
-          foreground = "#aaaaaa";
+          foreground = "#e8dfd4";
         };
         cursor = {
           text = "#000000";
-          cursor = "#aaaaaa";
+          cursor = "#e8dfd4";
         };
         normal = {
           black = "#000000";
@@ -22,7 +22,7 @@
           blue = "#5f0000";
           magenta = "#af005f";
           cyan = "#875f5f";
-          white = "#aaaaaa";
+          white = "#e8dfd4";
         };
         bright = {
           black = "#555555";
