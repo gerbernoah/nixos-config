@@ -177,6 +177,9 @@ in
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
         { command = "waybar"; }
+        # Land on workspace 1 at login. Uses startup (exec, not exec_always) so a
+        # config reload doesn't yank focus back here mid-session.
+        { command = "swaymsg workspace number 1"; }
       ];
 
       keybindings = defaultSwayKeybindings // {
@@ -189,6 +192,18 @@ in
         "${mod}+Shift+j" = "move down";
         "${mod}+Shift+k" = "move up";
         "${mod}+Shift+l" = "move right";
+
+        # Shove the whole current workspace onto the neighbouring output.
+        # "left"/"right" are relative to the outputs' layout positions, so with
+        # eDP-2 at 0 0 and the external to its right this is laptop <-> NEC.
+        "${mod}+Ctrl+Shift+h" = "move workspace to output left";
+        "${mod}+Ctrl+Shift+j" = "move workspace to output down";
+        "${mod}+Ctrl+Shift+k" = "move workspace to output up";
+        "${mod}+Ctrl+Shift+l" = "move workspace to output right";
+        "${mod}+Ctrl+Shift+Left" = "move workspace to output left";
+        "${mod}+Ctrl+Shift+Down" = "move workspace to output down";
+        "${mod}+Ctrl+Shift+Up" = "move workspace to output up";
+        "${mod}+Ctrl+Shift+Right" = "move workspace to output right";
 
         "${mod}+n" = "split h";
         "${mod}+m" = "split v";

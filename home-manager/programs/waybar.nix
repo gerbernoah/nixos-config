@@ -9,7 +9,14 @@
         position = "top";
         height = 32;
 
-        modules-left = [ "sway/mode" ];
+        modules-left = [ "sway/workspaces" "sway/mode" ];
+
+        "sway/workspaces" = {
+          # false = each bar lists only the workspaces on its own output
+          all-outputs = false;
+          format = "{name}";
+        };
+
         modules-center = [ "clock" ];
         modules-right = [ "pulseaudio" "network" "battery" "tray" ];
 
@@ -68,6 +75,26 @@
       #tray,
       #mode {
         padding: 0 10px;
+      }
+
+      #workspaces button {
+        padding: 0 8px;
+        background-color: transparent;
+        color: #a89984;
+        border-bottom: 2px solid transparent;
+      }
+
+      #workspaces button.visible {
+        color: #ebdbb2;
+      }
+
+      #workspaces button.focused {
+        color: #ebdbb2;
+        border-bottom: 2px solid #458588;
+      }
+
+      #workspaces button.urgent {
+        color: #cc241d;
       }
 
       #battery.warning {
