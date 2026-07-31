@@ -68,7 +68,13 @@
   programs = {
     nix-ld.enable = true;
     zsh.enable = true;
-    sway.enable = true;
+    sway = {
+      enable = true;
+      # Default extraPackages is [ swaylock swayidle foot dmenu wmenu ].
+      # foot/dmenu/wmenu are unused here (alacritty + fuzzel), and foot's
+      # three .desktop files were cluttering the fuzzel launcher.
+      extraPackages = with pkgs; [ swaylock swayidle ];
+    };
     vim.enable = true;
 
     _1password.enable = true;
