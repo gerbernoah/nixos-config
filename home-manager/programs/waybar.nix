@@ -12,7 +12,6 @@
         modules-left = [ "sway/workspaces" "sway/mode" ];
 
         "sway/workspaces" = {
-          # false = each bar lists only the workspaces on its own output
           all-outputs = false;
           format = "{name}";
         };

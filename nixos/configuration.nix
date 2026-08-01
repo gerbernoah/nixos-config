@@ -53,10 +53,6 @@
     };
     enableRedistributableFirmware = true;
 
-    # DDC/CI over I2C so external monitors (e.g. the LG UltraGear on DP-4) can
-    # have their hardware backlight driven via ddcutil. Creates the `i2c` group
-    # and udev rules for /dev/i2c-*; the user is added to `i2c` below. The
-    # laptop panel (eDP-2) still uses brightnessctl - it has no DDC bus.
     i2c.enable = true;
 
     bluetooth = {
@@ -70,9 +66,6 @@
     zsh.enable = true;
     sway = {
       enable = true;
-      # Default extraPackages is [ swaylock swayidle foot dmenu wmenu ].
-      # foot/dmenu/wmenu are unused here (alacritty + fuzzel), and foot's
-      # three .desktop files were cluttering the fuzzel launcher.
       extraPackages = with pkgs; [ swaylock swayidle ];
     };
     vim.enable = true;
@@ -116,15 +109,9 @@
   services = {
     fwupd.enable = true;
 
-    # TLP handles CPU EPP, PCIe ASPM, USB/SATA autosuspend etc. per AC/battery
-    # state. Must be paired with power-profiles-daemon disabled below - the
-    # two conflict over who owns CPU power policy.
     tlp = {
       enable = true;
       settings = {
-        # amd-pstate is in "active" mode (confirmed via
-        # /sys/devices/system/cpu/amd_pstate/status); EPP does the real work,
-        # so keep the governor on powersave and drive behavior via EPP.
         CPU_SCALING_GOVERNOR_ON_AC = "powersave";
         CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
@@ -134,8 +121,6 @@
         CPU_BOOST_ON_AC = 1;
         CPU_BOOST_ON_BAT = 1;
 
-        # Framework exposes an ACPI platform_profile; keep it "balanced" on
-        # battery too - "low-power" capped clocks to ~1.4GHz, too aggressive.
         PLATFORM_PROFILE_ON_AC = "balanced";
         PLATFORM_PROFILE_ON_BAT = "balanced";
 
@@ -179,16 +164,9 @@
     udev.packages = [ pkgs.brightnessctl ];
   };
 
-  hardware.logitech.wireless.enable = true; # HID++ udev rules for USB Unifying/Bolt receivers
-  # Solaar package itself is installed via Home Manager (see home-manager/home.nix).
-  # The module's rules only cover USB receivers; the MX Master 4 connects over Bluetooth
-  # (uhid device, bus 0005), so grant the local user access to Logitech BT hidraw nodes too.
+  hardware.logitech.wireless.enable = true;
   services.udev.extraRules = ''
     KERNEL=="hidraw*", KERNELS=="0005:046D:*", MODE="0660", GROUP="users", TAG+="uaccess"
-
-    # NuPhy (19F5) keyboards: the web configurator at drive.nuphy.io drives the
-    # keyboard's vendor HID interface over WebHID, so Chromium needs rw on the
-    # hidraw node. Covers USB/2.4GHz dongle (bus 0003) and Bluetooth (bus 0005).
     KERNEL=="hidraw*", KERNELS=="0003:19F5:*", MODE="0660", GROUP="users", TAG+="uaccess"
     KERNEL=="hidraw*", KERNELS=="0005:19F5:*", MODE="0660", GROUP="users", TAG+="uaccess"
   '';
@@ -214,35 +192,13 @@
       "networkmanager"
       "video"
       "docker"
-      "i2c" # access to /dev/i2c-* for ddcutil (external monitor brightness)
+      "i2c"
     ];
   };
 
   system = {
-    stateVersion = "24.05"; 
+    stateVersion = "24.05";
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
-
-# --- Parked idea: ZFS key from removable stick instead of baked into initrd ---
-#
-# Goal: read the ZFS native-encryption key from the removable BOOTKEY stick's
-# /boot partition at boot time, instead of baking it into the initrd via
-# boot.initrd.secrets above.
-#
-# What that required, from testing:
-#   - fileSystems."/boot" needs neededForBoot = true, plus
-#     options = [ "x-systemd.device-timeout=0" "x-systemd.requires=systemd-udev-settle.service" ]
-#     to reliably wait for the slow-to-enumerate USB stick during stage 1.
-#   - boot.initrd.systemd.services.systemd-udev-settle.enable = true;
-#   - boot.initrd.kernelModules = [ "xhci_pci" "usb_storage" "sd_mod" ];
-#     boot.initrd.availableKernelModules = [ "vfat" "nls_cp437" "nls_iso8859-1" ];
-#   - boot.initrd.systemd.services.zfs-import-zroot needs both:
-#       unitConfig.RequiresMountsFor = [ "/boot" ];
-#       after = [ "cryptsetup.target" ]; requires = [ "cryptsetup.target" ];
-#     zfs-import-zroot has no default ordering against the LUKS unlock, so
-#     without this it can race ahead of cryptsetup and fail to find the pool.
-#
-# Even with all of the above, boot still failed at "Import ZFS pool zroot"
-# after LUKS unlocked fine. Root cause not found; revisit later.

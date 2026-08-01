@@ -8,10 +8,6 @@ if exists('+termguicolors')
 endif
 set background=dark
 
-" Dark-redish colorscheme, matching the terminal/prompt palette
-" (#d75f5f primary, #af5f5f secondary, #875f5f dim, #ff5f5f pop).
-" A couple of warm accents (gold for literals, muted teal for
-" types/preproc) are kept so distinct syntax kinds stay readable.
 hi Normal       guifg=#aaaaaa guibg=#000000 ctermfg=248 ctermbg=0
 hi Comment      guifg=#875f5f ctermfg=95 cterm=italic gui=italic
 hi Constant     guifg=#d78700 ctermfg=172

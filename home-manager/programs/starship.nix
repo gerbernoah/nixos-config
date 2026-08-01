@@ -1,13 +1,5 @@
 { ... }:
 {
-  # Every style here names an ANSI palette slot rather than a hex value, so the
-  # prompt follows whatever alacritty theme is loaded (see programs/alacritty.nix).
-  # Hex styles emit truecolor escapes, which bypass the palette and stay fixed no
-  # matter what the terminal is themed to.
-  #
-  # The slots chosen are the ones the old hardcoded hexes occupied in the "ember"
-  # palette, so under ember the prompt looks exactly as it did before:
-  #   bright-cyan #d75f5f · bright-blue #af5f5f · cyan #875f5f · bright-red #ff5f5f
   programs.starship = {
     enable = true;
     enableZshIntegration = true;

@@ -3,11 +3,6 @@
 let
   mod = "Mod4";
 
-  # Brightness keys dim the internal laptop backlight (eDP-2, via brightnessctl)
-  # AND any DDC/CI-capable external monitor (via ddcutil, VCP 0x10 = luminance).
-  # ddcutil is backgrounded so the keypress feels instant, and silently no-ops
-  # when no external is connected. Requires hardware.i2c.enable + `i2c` group
-  # (set in nixos/configuration.nix).
   brightnessScript = pkgs.writeShellScript "brightness-adjust" ''
     case "$1" in
       up)   ${pkgs.brightnessctl}/bin/brightnessctl set +5% ; sign=+ ;;
@@ -17,20 +12,12 @@ let
     ${pkgs.ddcutil}/bin/ddcutil --noverify setvcp 10 "$sign" 5 >/dev/null 2>&1 || true
   '';
 
-  # Screenshots: grimshot (sway's grim/slurp/wl-copy wrapper) writes a PNG to
-  # ~/Pictures/Screenshots AND puts it on the clipboard, with a libnotify popup.
-  # "area" prompts a region drag; "output"/"active" grab the focused
-  # monitor/window with no prompt. The wrapper bundles its own deps.
-  #
-  # The dir is set inside the script (not just via home.sessionVariables) so it
-  # works even in a sway session started before the variable was exported.
   grimshot = "${pkgs.sway-contrib.grimshot}/bin/grimshot";
   screenshotScript = pkgs.writeShellScript "screenshot" ''
     export XDG_SCREENSHOTS_DIR="$HOME/Pictures/Screenshots"
     mkdir -p "$XDG_SCREENSHOTS_DIR"
     exec ${grimshot} --notify savecopy "$1"
   '';
-  # Mod+Print: region → swappy for cropping/annotation before you save it.
   annotateScript = pkgs.writeShellScript "screenshot-annotate" ''
     ${grimshot} save area - | ${pkgs.swappy}/bin/swappy -f -
   '';
@@ -104,20 +91,13 @@ in
     gtk.enable = true;
   };
 
-  # Where grimshot drops PNGs (named <timestamp>_grim.png). tmpfiles-style
-  # activation ensures the dir exists on first switch.
   home.sessionVariables.XDG_SCREENSHOTS_DIR = "${config.home.homeDirectory}/Pictures/Screenshots";
   home.activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p "${config.home.homeDirectory}/Pictures/Screenshots"
   '';
 
-  # wl-clipboard (wl-copy/wl-paste), grim + slurp, and swappy on PATH for
-  # manual/scripted captures beyond the keybindings.
   home.packages = with pkgs; [ wl-clipboard grim slurp swappy ];
 
-  # Notification daemon — required for grimshot's --notify "screenshot saved"
-  # popups (and any other app notifications) to actually appear. Runs as a
-  # user service tied to the sway session target.
   services.mako = {
     enable = true;
     settings = {
@@ -143,9 +123,8 @@ in
       };
       output = {
         "*" = {
-          scale = "1.0"; # default: native scaling for external/low-density panels
+          scale = "1.0";
         };
-        # Hi-DPI laptop panel needs upscaling; the 1.0 default is only right for externals.
         "eDP-2" = {
           position = "0 0";
           scale = "1.5";
@@ -173,7 +152,7 @@ in
 
       startup = [
         { command = "dex --autostart --environment sway"; }
-        { command = "solaar --window=hide"; } # background daemon: reapplies MX Master 4 DPI on connect
+        { command = "solaar --window=hide"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
         { command = "waybar"; }
@@ -190,9 +169,6 @@ in
         "${mod}+Shift+k" = "move up";
         "${mod}+Shift+l" = "move right";
 
-        # Shove the whole current workspace onto the neighbouring output.
-        # "left"/"right" are relative to the outputs' layout positions, so with
-        # eDP-2 at 0 0 and the external to its right this is laptop <-> NEC.
         "${mod}+Ctrl+Shift+h" = "move workspace to output left";
         "${mod}+Ctrl+Shift+j" = "move workspace to output down";
         "${mod}+Ctrl+Shift+k" = "move workspace to output up";
