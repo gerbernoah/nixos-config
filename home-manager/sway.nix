@@ -177,9 +177,6 @@ in
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
         { command = "waybar"; }
-        # Land on workspace 1 at login. Uses startup (exec, not exec_always) so a
-        # config reload doesn't yank focus back here mid-session.
-        { command = "swaymsg workspace number 1"; }
       ];
 
       keybindings = defaultSwayKeybindings // {
