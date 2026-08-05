@@ -180,6 +180,7 @@
       sbctl
       brightnessctl
       ddcutil
+      (callPackage ./pkgs/nuphy-pair.nix { })
     ];
   };
 
