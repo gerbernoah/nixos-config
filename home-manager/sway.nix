@@ -129,6 +129,9 @@ in
           position = "0 0";
           scale = "1.5";
         };
+        "DP-1" = {
+          scale = "1.25";
+        };
       };
 
       window = {
