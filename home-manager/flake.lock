@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1781817281,
-        "narHash": "sha256-QFLdHh1b3chdpQb+kro3UjOoKosc9/86xh9uLx+PwKI=",
+        "lastModified": 1786380705,
+        "narHash": "sha256-Ap8WX28poOQk7nbjvUrQLrgEAsgxZ+/5KBGgsD8jHvY=",
         "owner": "Reginleif88",
         "repo": "claude-cowork-nix",
-        "rev": "5018f7912405c1559314f56bc587ee6318d60132",
+        "rev": "daf5cd9723e3ceb9f19e4fc3539075d8eced6b61",
         "type": "github"
       },
       "original": {

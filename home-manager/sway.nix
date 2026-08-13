@@ -132,6 +132,9 @@ in
         "DP-1" = {
           scale = "1.25";
         };
+        "Dell Inc. DELL S2722QC J28WLD3" = {
+          scale = "1.25";
+        };
       };
 
       window = {
