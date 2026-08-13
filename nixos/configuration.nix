@@ -162,6 +162,11 @@
     libinput.enable = true;
 
     udev.packages = [ pkgs.brightnessctl ];
+
+    # Secret Service provider (org.freedesktop.secrets). Electron apps such as
+    # Claude Desktop use it via safeStorage to persist OAuth tokens; without it
+    # isEncryptionAvailable() is false and tokens are never written to disk.
+    gnome.gnome-keyring.enable = true;
   };
 
   hardware.logitech.wireless.enable = true;
