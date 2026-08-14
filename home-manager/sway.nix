@@ -122,18 +122,13 @@ in
         "type:touchpad".tap = "enabled";
       };
       output = {
+        # Default for every external monitor; eDP-2 (internal panel) overrides below.
         "*" = {
-          scale = "1.0";
+          scale = "1.25";
         };
         "eDP-2" = {
           position = "0 0";
           scale = "1.5";
-        };
-        "DP-1" = {
-          scale = "1.25";
-        };
-        "Dell Inc. DELL S2722QC J28WLD3" = {
-          scale = "1.25";
         };
       };
 
