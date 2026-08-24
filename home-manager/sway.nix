@@ -156,7 +156,6 @@ in
         { command = "solaar --window=hide"; }
         { command = "nm-applet --indicator"; }
         { command = "1password --silent"; }
-        { command = "waybar"; }
       ];
 
       keybindings = defaultSwayKeybindings // {
