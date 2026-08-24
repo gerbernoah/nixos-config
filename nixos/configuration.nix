@@ -157,8 +157,6 @@
       pulse.enable = true;
     };
 
-    blueman.enable = true;
-
     libinput.enable = true;
 
     udev.packages = [ pkgs.brightnessctl ];
@@ -185,7 +183,8 @@
       sbctl
       brightnessctl
       ddcutil
-      (callPackage ./pkgs/nuphy-pair.nix { })
+      overskride
+      (callPackage ./pkgs/bt-pair.nix { })
     ];
   };
 

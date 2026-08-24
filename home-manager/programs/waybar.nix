@@ -17,7 +17,7 @@
         };
 
         modules-center = [ "clock" ];
-        modules-right = [ "pulseaudio" "network" "battery" "tray" ];
+        modules-right = [ "pulseaudio" "bluetooth" "network" "battery" "tray" ];
 
         clock = {
           format = "{:%H:%M}";
@@ -30,6 +30,17 @@
             warning = 30;
             critical = 15;
           };
+        };
+
+        bluetooth = {
+          format = "bt";
+          format-off = "bt off";
+          format-disabled = "";
+          format-connected = "bt {num_connections}";
+          tooltip-format = "{controller_alias}\t{controller_address}";
+          tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{device_enumerate}";
+          tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
+          on-click = "overskride";
         };
 
         network = {
@@ -69,6 +80,7 @@
 
       #clock,
       #pulseaudio,
+      #bluetooth,
       #network,
       #battery,
       #tray,
