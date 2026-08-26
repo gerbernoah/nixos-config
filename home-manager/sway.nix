@@ -106,6 +106,13 @@ in
     };
   };
 
+  # graphical-session.target is pulled up by NixOS' nixos-fake-graphical-session.target
+  # as soon as the DM session starts, before sway has exported WAYLAND_DISPLAY into the
+  # systemd user environment. Services keyed off it hit ConditionEnvironment=WAYLAND_DISPLAY
+  # and are skipped for good. sway-session.target is started by sway itself, after the
+  # environment is imported.
+  wayland.systemd.target = "sway-session.target";
+
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
