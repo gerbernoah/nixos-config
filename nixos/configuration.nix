@@ -184,7 +184,6 @@
       brightnessctl
       ddcutil
       overskride
-      (callPackage ./pkgs/bt-pair.nix { })
     ];
   };
 
