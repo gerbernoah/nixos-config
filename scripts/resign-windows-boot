@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+# Re-sign the Windows boot chain with your own Secure Boot db key.
+#
+# The chain has TWO stages on TWO filesystems, and both must be signed:
+#   1. ESP (FAT32, UUID EA13-E195)      bootmgfw.efi and friends
+#   2. Windows NTFS (UUID B21E...283D)  \Windows\System32\winload.efi
+# Signing only stage 1 gets you past the firmware and then fails with
+# 0xc0000428 "Windows cannot verify the digital signature for this file",
+# because bootmgfw validates winload against firmware db, which holds only
+# your key. An earlier version of this script did exactly that.
+#
+# Run BY HAND after a Windows update. Do NOT automate it: the Windows volumes
+# are unencrypted and writable by anyone with Windows admin or physical access,
+# so blind signing would bless an attacker's binary with the one key the
+# firmware trusts. The manual check IS the security control.
+#
+#   sudo resign-windows-boot [--check]
+#
+# VERIFICATION NOTE: never use `sbverify --cert` to decide if a file is signed
+# by you -- it returns success on Microsoft-signed binaries carrying a full MS
+# chain. We grep for our own CN in `sbverify --list` instead.
+
+set -uo pipefail
+
+ESP_UUID="EA13-E195"
+WIN_UUID="B21E14681E14283D"
+KEYDIR="/var/lib/sbctl/keys/db"
+LOG="/var/log/resign-windows-boot.log"
+BACKUP="/var/lib/resign-windows-boot/backups"
+OS_LOADERS=(Windows/System32/winload.efi Windows/System32/winresume.efi)
+
+CHECK_ONLY=0
+case "${1:-}" in
+  --check) CHECK_ONLY=1 ;;
+  "")      ;;
+  *)       echo "usage: $0 [--check]" >&2; exit 2 ;;
+esac
+
+red()  { printf '\033[31m%s\033[0m\n' "$*"; }
+grn()  { printf '\033[32m%s\033[0m\n' "$*"; }
+ylw()  { printf '\033[33m%s\033[0m\n' "$*"; }
+bold() { printf '\033[1m%s\033[0m\n' "$*"; }
+die()  { red "error: $*" >&2; exit 1; }
+
+[[ $EUID -eq 0 ]] || die "must run as root:  sudo $0 ${*:-}"
+[[ -t 0 && -t 1 ]] || die "no terminal attached; run this interactively"
+
+exec > >(tee -a "$LOG") 2>&1
+echo; bold "===== $(date -Is)  resign-windows-boot ${*:-} ====="
+
+if command -v sbsign >/dev/null 2>&1; then
+  SBSIGN=(sbsign); SBVERIFY=(sbverify); SBATTACH=(sbattach)
+else
+  SBSIGN=(nix shell nixpkgs#sbsigntool -c sbsign)
+  SBVERIFY=(nix shell nixpkgs#sbsigntool -c sbverify)
+  SBATTACH=(nix shell nixpkgs#sbsigntool -c sbattach)
+fi
+if command -v openssl >/dev/null 2>&1; then SSL=(openssl); else SSL=(nix shell nixpkgs#openssl -c openssl); fi
+if command -v mount.ntfs-3g >/dev/null 2>&1; then NTFSMOUNT=(mount.ntfs-3g); else NTFSMOUNT=(nix shell nixpkgs#ntfs3g -c mount.ntfs-3g); fi
+"${SBVERIFY[@]}" --version >/dev/null 2>&1 || die "cannot run sbverify (${SBVERIFY[*]})"
+
+KEY="$KEYDIR/db.key"; CERT="$KEYDIR/db.pem"
+[[ -r "$KEY" && -r "$CERT" ]] || die "db key/cert missing under $KEYDIR"
+DBCN="$("${SSL[@]}" x509 -in "$CERT" -noout -subject 2>/dev/null | sed 's/.*CN *= *//; s/,.*//')"
+[[ -n "$DBCN" ]] || die "could not read the CN out of $CERT"
+echo "   signing identity: CN=$DBCN"
+
+ENR=$(mktemp); EPEM=$(mktemp)
+if tail -c +49 /sys/firmware/efi/efivars/db-d719b2cb-3d3a-4596-a3bc-dad00e67656f > "$ENR" 2>/dev/null \
+   && "${SSL[@]}" x509 -inform der -in "$ENR" -out "$EPEM" 2>/dev/null; then
+  FP_ENR=$("${SSL[@]}" x509 -in "$EPEM" -noout -fingerprint -sha256 | cut -d= -f2)
+  FP_LOC=$("${SSL[@]}" x509 -in "$CERT" -noout -fingerprint -sha256 | cut -d= -f2)
+  [[ "$FP_ENR" == "$FP_LOC" ]] || { red "   local db.pem is NOT the enrolled cert"; die "would produce binaries the firmware rejects"; }
+  echo "   firmware db matches local db.pem"
+fi
+rm -f "$ENR" "$EPEM"
+
+mine() { "${SBVERIFY[@]}" --list "$1" 2>/dev/null | grep -qF "CN=$DBCN"; }
+signer_of() { "${SBVERIFY[@]}" --list "$1" 2>&1 | sed -n 's/^ *- subject: *//p' | paste -sd'; ' -; }
+
+sign_file() {
+  local f="$1" work out
+  work="$(mktemp /run/sign.XXXXXX)"; out="$(mktemp -u /run/sign.XXXXXX)"
+  cp -f "$f" "$work" || { rm -f "$work" "$out"; return 1; }
+  "${SBATTACH[@]}" --remove "$work" >/dev/null 2>&1
+  "${SBSIGN[@]}" --key "$KEY" --cert "$CERT" --output "$out" "$work" >/dev/null || { rm -f "$work" "$out"; return 1; }
+  mine "$out" || { rm -f "$work" "$out"; return 1; }
+  cp -f "$out" "$f" || { rm -f "$work" "$out"; return 1; }
+  rm -f "$work" "$out"
+  mine "$f"
+}
+
+RUNSTAMP="$(date +%Y%m%d-%H%M%S)"
+backup_once() {
+  local f="$1" rel="$2" d="$BACKUP/$RUNSTAMP"
+  mkdir -p "$d/$(dirname "$rel")" && cp -f "$f" "$d/$rel"
+}
+
+ESPDEV="$(blkid -U "$ESP_UUID")" || die "no filesystem with UUID $ESP_UUID (nvme names move; that is why we use UUIDs)"
+echo "   esp:  $ESPDEV"
+EMNT="$(findmnt -n -o TARGET --source "$ESPDEV" | head -1)"; EWE=0
+if [[ -z "$EMNT" ]]; then EMNT="$(mktemp -d /run/winesp.XXXXXX)"; mount "$ESPDEV" "$EMNT" || die "mount $ESPDEV failed"; EWE=1; fi
+
+WINDEV="$(blkid -U "$WIN_UUID")" || die "no filesystem with UUID $WIN_UUID"
+echo "   ntfs: $WINDEV"
+WMNT="$(mktemp -d /run/winos.XXXXXX)"
+"${NTFSMOUNT[@]}" "$WINDEV" "$WMNT" -o ro || die "could not mount the Windows volume read-only"
+
+cleanup() {
+  cd /
+  umount "$WMNT" 2>/dev/null; rmdir "$WMNT" 2>/dev/null
+  if (( EWE )); then sync; umount "$EMNT" 2>/dev/null && rmdir "$EMNT" 2>/dev/null; fi
+}
+trap cleanup EXIT
+
+echo; bold "== secure boot state"; sbctl status 2>&1 | sed 's/^/   /'
+
+# hiberfil.sys is ALLOCATED whenever hibernation is enabled, so its size proves
+# nothing. A real saved hibernation image starts with magic "hibr"/"HIBR"/"wake";
+# a clean shutdown leaves those bytes zeroed. Only the magic blocks writing, and
+# it never blocks a read-only --check.
+HIBER_ACTIVE=0
+if [[ -e "$WMNT/hiberfil.sys" ]]; then
+  HMAGIC="$(head -c 4 "$WMNT/hiberfil.sys" 2>/dev/null | tr -cd '[:print:]')"
+  HSIZE="$(stat -c%s "$WMNT/hiberfil.sys" 2>/dev/null || echo 0)"
+  case "${HMAGIC,,}" in
+    hibr|wake)
+      HIBER_ACTIVE=1
+      echo; red "   hiberfil.sys holds a live hibernation image (magic: $HMAGIC)" ;;
+    *)
+      echo; ylw "   hiberfil.sys present ($HSIZE bytes) but no hibernation image."
+      ylw "   Fast Startup is probably still enabled; turn it off in Windows." ;;
+  esac
+fi
+
+declare -a ESP_TODO=() OS_TODO=()
+
+echo; bold "== stage 1: ESP ($ESP_UUID)"
+mapfile -t FOUND < <(cd "$EMNT" && find . -iname '*.efi' -type f -printf '%P\n' | sort)
+(( ${#FOUND[@]} )) || die "no .efi files on the ESP -- wrong filesystem?"
+for rel in "${FOUND[@]}"; do
+  f="$EMNT/$rel"
+  echo; bold "-- $rel"
+  printf '   %s bytes, modified %s\n   signer: %s\n' "$(stat -c%s "$f")" "$(date -r "$f" '+%Y-%m-%d %H:%M')" "$(signer_of "$f")"
+  if mine "$f"; then grn "   OK: carries CN=$DBCN"; else ylw "   needs your signature"; ESP_TODO+=("$rel"); fi
+done
+
+echo; bold "== stage 2: Windows OS loaders ($WIN_UUID)"
+for rel in "${OS_LOADERS[@]}"; do
+  f="$WMNT/$rel"
+  echo; bold "-- $rel"
+  if [[ ! -e "$f" ]]; then ylw "   not present, skipping"; continue; fi
+  printf '   %s bytes, modified %s\n   signer: %s\n' "$(stat -c%s "$f")" "$(date -r "$f" '+%Y-%m-%d %H:%M')" "$(signer_of "$f")"
+  if mine "$f"; then grn "   OK: carries CN=$DBCN"
+  else ylw "   needs your signature (this is what causes 0xc0000428)"; OS_TODO+=("$rel"); fi
+done
+
+TOTAL=$(( ${#ESP_TODO[@]} + ${#OS_TODO[@]} ))
+echo
+if (( TOTAL == 0 )); then grn "Whole boot chain already carries CN=$DBCN. Nothing to do."; exit 0; fi
+
+if (( CHECK_ONLY )); then
+  ylw "--check: would sign $TOTAL file(s):"
+  for r in ${ESP_TODO[@]+"${ESP_TODO[@]}"}; do echo "   esp:  $r"; done
+  for r in ${OS_TODO[@]+"${OS_TODO[@]}"};  do echo "   ntfs: $r"; done
+  (( HIBER_ACTIVE )) && ylw "NOTE: Windows is hibernated; signing would be refused until it is shut down fully."
+  exit 0
+fi
+
+(( HIBER_ACTIVE )) && die "Windows is hibernated -- writing to this NTFS volume would corrupt it.
+       Boot Windows, shut it down fully (not hibernate / Fast Startup), then retry."
+
+bold "About to replace the signature on $TOTAL file(s) with CN=$DBCN."
+echo "Originals are backed up to $BACKUP/$RUNSTAMP first."
+echo "Continue only if every signer above is the Microsoft production signer you"
+echo "expect after a Windows update."
+read -r -p "Type 'sign' to proceed: " answer
+[[ "$answer" == "sign" ]] || { ylw "aborted, nothing written"; exit 1; }
+
+rc=0
+if (( ${#ESP_TODO[@]} )); then
+  mount -o remount,rw "$EMNT" 2>/dev/null
+  touch "$EMNT/.rwtest" 2>/dev/null && rm -f "$EMNT/.rwtest" || die "ESP is read-only"
+  for rel in "${ESP_TODO[@]}"; do
+    echo; bold "signing esp:$rel"
+    backup_once "$EMNT/$rel" "esp/$rel" || { red "   backup failed, skipping"; rc=1; continue; }
+    if sign_file "$EMNT/$rel"; then grn "   done: now carries CN=$DBCN"; else red "   FAILED"; rc=1; fi
+  done
+  sync
+fi
+
+if (( ${#OS_TODO[@]} )); then
+  if ! umount "$WMNT"; then
+    red "   could not unmount the Windows volume to switch it read-write"; rc=1
+  elif "${NTFSMOUNT[@]}" "$WINDEV" "$WMNT" -o rw; then
+    for rel in "${OS_TODO[@]}"; do
+      echo; bold "signing ntfs:$rel"
+      backup_once "$WMNT/$rel" "ntfs/$rel" || { red "   backup failed, skipping"; rc=1; continue; }
+      if sign_file "$WMNT/$rel"; then grn "   done: now carries CN=$DBCN"; else red "   FAILED"; rc=1; fi
+    done
+    sync
+  else
+    red "   could not mount $WINDEV read-write (dirty volume?)"; rc=1
+  fi
+fi
+
+echo
+if (( rc == 0 )); then
+  grn "Done. Remove the BOOTKEY stick and pick Windows Boot Manager in the firmware menu."
+  echo "Backups: $BACKUP/$RUNSTAMP"
+  echo "Log:     $LOG"
+else
+  die "something failed above -- see $LOG (backups in $BACKUP/$RUNSTAMP)"
+fi
