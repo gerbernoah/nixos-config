@@ -30,6 +30,7 @@
       docker-compose
       solaar
       pavucontrol
+      tor-browser
     ];
 
     file.".vimrc".source = ./vimrc;

@@ -165,6 +165,14 @@
     # Claude Desktop use it via safeStorage to persist OAuth tokens; without it
     # isEncryptionAvailable() is false and tokens are never written to disk.
     gnome.gnome-keyring.enable = true;
+
+    # System Tor daemon for routing other programs (SOCKS on 127.0.0.1:9050).
+    # Independent of Tor Browser, which runs its own bundled tor on 9150.
+    tor = {
+      enable = true;
+      client.enable = true;
+      torsocks.enable = true;
+    };
   };
 
   hardware.logitech.wireless.enable = true;
