@@ -7,15 +7,14 @@ in
     enable = true;
     enableDefaultConfig = false;
 
-    matchBlocks = {
-      "*".identityAgent = "~/.1password/agent.sock";
+    settings = {
+      "*".IdentityAgent = "~/.1password/agent.sock";
 
-      "jumphost.inf.ethz.ch".user = ethUser;
+      "jumphost.inf.ethz.ch".User = ethUser;
 
-      "ethz" = {
-        host = "*.ethz.ch !jumphost.inf.ethz.ch";
-        user = ethUser;
-        proxyJump = "jumphost.inf.ethz.ch";
+      "*.ethz.ch !jumphost.inf.ethz.ch" = {
+        User = ethUser;
+        ProxyJump = "jumphost.inf.ethz.ch";
       };
     };
   };
