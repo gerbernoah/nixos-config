@@ -3,6 +3,7 @@
 {
   imports = [
     ./sway.nix
+    ./programs/ssh.nix
     ./programs/zed.nix
     ./programs/chromium.nix
     ./programs/direnv.nix
