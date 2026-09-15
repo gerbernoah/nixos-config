@@ -32,6 +32,7 @@
       solaar
       pavucontrol
       tor-browser
+      obsidian
     ];
 
     file.".vimrc".source = ./vimrc;
