@@ -89,6 +89,10 @@
       enable = true;
       wifi.macAddress = "stable";
     };
+
+    firewall.extraCommands = ''
+      ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m conntrack --ctstate ESTABLISHED -j RETURN
+    '';
   };
 
   time.timeZone = "Europe/Zurich";
