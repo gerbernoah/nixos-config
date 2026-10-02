@@ -33,6 +33,7 @@
       pavucontrol
       tor-browser
       obsidian
+      pixi
     ];
 
     file.".vimrc".source = ./vimrc;
