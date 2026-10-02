@@ -34,6 +34,8 @@
       tor-browser
       obsidian
       pixi
+      zip
+      unzip
     ];
 
     file.".vimrc".source = ./vimrc;
