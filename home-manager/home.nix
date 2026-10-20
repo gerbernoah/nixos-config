@@ -36,6 +36,8 @@
       pixi
       zip
       unzip
+      proton-pass
+      proton-pass-cli
     ];
 
     file.".vimrc".source = ./vimrc;
