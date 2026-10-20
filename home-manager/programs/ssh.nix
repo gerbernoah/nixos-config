@@ -24,6 +24,8 @@ in
   # pass-cli defaults to the kernel keyring, which this service can't read;
   # GNOME Keyring over D-Bus is reachable from both the shell and systemd.
   home.sessionVariables.PROTON_PASS_LINUX_KEYRING = "dbus";
+  # For tools that ignore IdentityAgent, like git signing with ssh-keygen.
+  home.sessionVariables.SSH_AUTH_SOCK = "\${XDG_RUNTIME_DIR}/proton-pass-agent.sock";
   # Only start once logged in: a failing agent force-logs-out, wiping the
   # session dir, and its restart loop used to break `pass-cli login` mid-way.
   systemd.user.services.proton-pass-ssh-agent = {
