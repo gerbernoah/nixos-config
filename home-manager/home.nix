@@ -38,7 +38,7 @@
       unzip
       proton-pass
       proton-pass-cli
-      proton-vpn
+      proton-vpn-cli
     ];
 
     file.".vimrc".source = ./vimrc;
