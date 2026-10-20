@@ -90,6 +90,10 @@
       wifi.macAddress = "stable";
     };
 
+    # Proton VPN's WireGuard tunnel takes the default route, which strict
+    # reverse-path filtering drops replies for.
+    firewall.checkReversePath = "loose";
+
     firewall.extraCommands = ''
       ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m conntrack --ctstate ESTABLISHED -j RETURN
     '';
