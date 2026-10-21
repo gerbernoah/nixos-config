@@ -162,7 +162,6 @@ in
         { command = "dex --autostart --environment sway"; }
         { command = "solaar --window=hide"; }
         { command = "nm-applet --indicator"; }
-        { command = "1password --silent"; }
       ];
 
       keybindings = defaultSwayKeybindings // {

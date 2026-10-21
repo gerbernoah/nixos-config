@@ -69,12 +69,6 @@
       extraPackages = with pkgs; [ swaylock swayidle ];
     };
     vim.enable = true;
-
-    _1password.enable = true;
-    _1password-gui = {
-      enable = true;
-      polkitPolicyOwners = [ "ngerber" ];
-    };
   };
 
   nixpkgs.config = {

@@ -7,7 +7,7 @@
     };
 
     extensions = [
-      "aeblfdkhhhdcdjpifhhbdiojplfjncoa"
+      "ghmbeldphafepmbegfdlkpapadhbakde" # Proton Pass
     ];
 
     commandLineArgs = [
