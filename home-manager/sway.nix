@@ -129,11 +129,12 @@ in
         "type:touchpad".tap = "enabled";
       };
       output = {
-        # Default for every external monitor; eDP-2 (internal panel) overrides below.
+        # Default for every external monitor; the internal panel overrides below.
         "*" = {
           scale = "1.25";
         };
-        "eDP-2" = {
+        # Matched by make/model/serial: the connector flips between eDP-1 and eDP-2 across boots.
+        "BOE 0x0BC9 Unknown" = {
           position = "0 0";
           scale = "1.5";
         };
