@@ -28,15 +28,19 @@ in
   home.sessionVariables.SSH_AUTH_SOCK = "\${XDG_RUNTIME_DIR}/proton-pass-agent.sock";
   # Only start once logged in: a failing agent force-logs-out, wiping the
   # session dir, and its restart loop used to break `pass-cli login` mid-way.
+  # Restart also after a clean exit (it once stopped overnight with status 0
+  # and stayed down); without the session the condition keeps it from looping.
   systemd.user.services.proton-pass-ssh-agent = {
     Unit = {
       Description = "Proton Pass SSH agent";
       ConditionPathExists = "%h/.local/share/proton-pass-cli/.session/session.json";
+      StartLimitIntervalSec = 600;
+      StartLimitBurst = 5;
     };
     Service = {
       Environment = "PROTON_PASS_LINUX_KEYRING=dbus";
       ExecStart = "${pkgs.proton-pass-cli}/bin/pass-cli ssh-agent start --socket-path %t/proton-pass-agent.sock";
-      Restart = "on-failure";
+      Restart = "always";
       RestartSec = 30;
     };
     Install.WantedBy = [ "default.target" ];
